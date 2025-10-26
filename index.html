@@ -1553,6 +1553,48 @@
                 min-width: 120px;
             }
         }
+
+        /* Purchase Orders Database Styles */
+        .confidence-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .confidence-high {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .confidence-medium {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .confidence-low {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-completed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
     </style>
 </head>
 <body>
@@ -2136,6 +2178,20 @@
                     </div>
                     <button class="btn-database">View Quotations →</button>
                 </div>
+
+                <div class="database-card-large"
+                     onclick="loadPurchaseOrderDatabase()"
+                     tabindex="0"
+                     role="button"
+                     aria-label="View Purchase Orders Database">
+                    <div class="database-card-icon">📦</div>
+                    <h2>Purchase Orders Database</h2>
+                    <p>View and filter all purchase order records</p>
+                    <div class="database-card-stat">
+                        <span id="po-total-count">Loading...</span> records
+                    </div>
+                    <button class="btn-database">View Purchase Orders →</button>
+                </div>
             </div>
         </div>
     </div>
@@ -2376,6 +2432,129 @@
         </div>
     </div>
 
+    <!-- Purchase Orders Database Page -->
+    <div id="purchaseOrderDatabase" class="page">
+        <button class="back-button"
+                onclick="navigateTo('databaseSelection')"
+                aria-label="Back to Database Selection">
+            <span aria-hidden="true">←</span>
+            <span>Back to Database</span>
+        </button>
+
+        <div class="database-container">
+            <div class="database-header">
+                <h1>📦 Purchase Orders Database</h1>
+                <div class="database-actions">
+                    <button class="btn-secondary" onclick="exportToCSV('purchaseorders')">📥 Export CSV</button>
+                    <button class="btn-secondary" onclick="refreshPurchaseOrderData()">🔄 Refresh</button>
+                </div>
+            </div>
+
+            <div class="filters-section">
+                <h3>🔍 Filters</h3>
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label for="po-customer-filter">Customer Name</label>
+                        <div class="searchable-dropdown" id="po-customer-dropdown">
+                            <div class="searchable-dropdown-input" tabindex="0">
+                                <span class="dropdown-text">All Customers</span>
+                                <span class="dropdown-arrow">▼</span>
+                            </div>
+                            <div class="searchable-dropdown-menu">
+                                <div class="searchable-dropdown-search">
+                                    <input type="text" placeholder="Search customers..." autocomplete="off">
+                                </div>
+                                <div class="searchable-dropdown-options">
+                                    <div class="searchable-dropdown-empty">Loading customers...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="po-date-from">Date From</label>
+                        <input type="date" id="po-date-from" onchange="applyPurchaseOrderFilters()">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="po-date-to">Date To</label>
+                        <input type="date" id="po-date-to" onchange="applyPurchaseOrderFilters()">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="po-total-min">Min Amount (₹)</label>
+                        <input type="number" id="po-total-min" placeholder="0" onchange="applyPurchaseOrderFilters()">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="po-total-max">Max Amount (₹)</label>
+                        <input type="number" id="po-total-max" placeholder="Any" onchange="applyPurchaseOrderFilters()">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="po-status-filter">Status</label>
+                        <div class="searchable-dropdown" id="po-status-dropdown">
+                            <div class="searchable-dropdown-input" tabindex="0">
+                                <span class="dropdown-text">All Statuses</span>
+                                <span class="dropdown-arrow">▼</span>
+                            </div>
+                            <div class="searchable-dropdown-menu">
+                                <div class="searchable-dropdown-search">
+                                    <input type="text" placeholder="Search statuses..." autocomplete="off">
+                                </div>
+                                <div class="searchable-dropdown-options">
+                                    <div class="searchable-dropdown-empty">Loading statuses...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-actions-row">
+                    <button class="btn-primary" onclick="applyPurchaseOrderFilters()">Apply Filters</button>
+                    <button class="btn-secondary" onclick="clearPurchaseOrderFilters()">Clear All</button>
+                    <div class="filter-summary">
+                        Showing: <strong id="po-showing-count">0</strong> of <strong id="po-db-total-count">0</strong> records
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <div id="po-loading" class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Loading purchase orders...</p>
+                </div>
+                <div id="po-table-container" style="display: none;">
+                    <table class="database-table">
+                        <thead>
+                            <tr>
+                                <th onclick="sortPurchaseOrders('created_at')">Date ↕</th>
+                                <th onclick="sortPurchaseOrders('po_number')">PO Number ↕</th>
+                                <th onclick="sortPurchaseOrders('customer_name')">Customer ↕</th>
+                                <th onclick="sortPurchaseOrders('total_amount')">Total (₹) ↕</th>
+                                <th onclick="sortPurchaseOrders('status')">Status ↕</th>
+                                <th onclick="sortPurchaseOrders('confidence_score')">Confidence ↕</th>
+                                <th>View</th>
+                            </tr>
+                        </thead>
+                        <tbody id="po-table-body">
+                        </tbody>
+                    </table>
+                </div>
+                <div id="po-no-data" class="no-data-state" style="display: none;">
+                    <p>📭 No purchase orders found matching your filters</p>
+                    <button class="btn-secondary" onclick="clearPurchaseOrderFilters()">Clear Filters</button>
+                </div>
+            </div>
+
+            <div class="pagination" id="po-pagination" style="display: none;">
+                <button id="po-prev-btn" onclick="loadPurchaseOrderPage(currentPurchaseOrderPage - 1)" disabled>← Previous</button>
+                <span id="po-page-info">Page 1 of 1</span>
+                <button id="po-next-btn" onclick="loadPurchaseOrderPage(currentPurchaseOrderPage + 1)" disabled>Next →</button>
+            </div>
+        </div>
+    </div>
+
     <!-- HTML Viewer Modal for Invoice/Quotation Recovery -->
     <div id="htmlViewerModal" class="html-viewer-modal" style="display: none;">
         <div class="html-viewer-overlay" onclick="closeHTMLViewer()"></div>
@@ -2412,6 +2591,7 @@
         // Database Webhook URLs (Update these with your actual n8n webhook URLs)
         const INVOICE_DATABASE_URL = 'https://sngsng.app.n8n.cloud/webhook/get-invoices';
         const QUOTATION_DATABASE_URL = 'https://sngsng.app.n8n.cloud/webhook/get-quotations';
+        const PURCHASE_ORDER_DATABASE_URL = 'https://sngsng.app.n8n.cloud/webhook/get-purchase-orders';
 
         // ==================== SECURITY & UTILITIES ====================
 
@@ -3761,6 +3941,53 @@
                 if (quotationCountEl) quotationCountEl.textContent = 'N/A';
                 console.error('Failed to load quotation count:', error);
             }
+
+            // Load purchase order count
+            const poCountEl = document.getElementById('po-total-count');
+            try {
+                const poResponse = await fetch(PURCHASE_ORDER_DATABASE_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filters: {}, page: 1, limit: 1 })
+                });
+
+                if (poResponse.ok) {
+                    let result = await poResponse.json();
+
+                    // Handle array response
+                    if (Array.isArray(result) && result.length > 0) {
+                        result = result[0];
+                    }
+
+                    if (result.success && result.pagination) {
+                        if (poCountEl) {
+                            poCountEl.textContent = result.pagination.total_records || 0;
+                        }
+                    } else if (result.success && result.data) {
+                        // Fallback if pagination not provided
+                        if (poCountEl) {
+                            poCountEl.textContent = result.data.length || 0;
+                        }
+                    } else if (result.success && result.purchase_orders) {
+                        // Handle purchase_orders field
+                        if (poCountEl) {
+                            poCountEl.textContent = result.purchase_orders.length || 0;
+                        }
+                    } else if (result.count !== undefined) {
+                        // Use count field if available
+                        if (poCountEl) {
+                            poCountEl.textContent = result.count || 0;
+                        }
+                    } else {
+                        if (poCountEl) poCountEl.textContent = '0';
+                    }
+                } else {
+                    if (poCountEl) poCountEl.textContent = 'N/A';
+                }
+            } catch (error) {
+                if (poCountEl) poCountEl.textContent = 'N/A';
+                console.error('Failed to load purchase order count:', error);
+            }
         }
 
         // ==================== INITIALIZATION ====================
@@ -4250,6 +4477,20 @@
                     if (this.dropdowns.status) {
                         this.dropdowns.status.setOptions(statuses);
                     }
+                } else if (this.dataType === 'purchaseOrder') {
+                    // Extract unique customer names
+                    const customers = [...new Set(this.allData.map(item => item.customer_name).filter(Boolean))].sort();
+                    if (this.dropdowns.customer) {
+                        this.dropdowns.customer.setOptions(customers);
+                        console.log('Set customer options for Purchase Orders:', customers);
+                    }
+
+                    // Extract unique statuses
+                    const statuses = [...new Set(this.allData.map(item => item.status).filter(Boolean))].sort();
+                    if (this.dropdowns.status) {
+                        this.dropdowns.status.setOptions(statuses);
+                        console.log('Set status options for Purchase Orders:', statuses);
+                    }
                 }
             }
 
@@ -4539,7 +4780,8 @@
          */
         async function loadInvoiceDatabase() {
             navigateTo('invoiceDatabase');
-            await fetchInvoiceData();
+            // Force refresh to ensure we get fresh data from n8n
+            await fetchInvoiceData({}, 1, true);
         }
 
         /**
@@ -4547,19 +4789,21 @@
          */
         async function loadQuotationDatabase() {
             navigateTo('quotationDatabase');
-            await fetchQuotationData();
+            // Force refresh to ensure we get fresh data from n8n
+            await fetchQuotationData({}, 1, true);
         }
 
         /**
          * Fetch Invoice Data from n8n - With client-side filtering
          */
-        async function fetchInvoiceData(filterCriteria = {}, page = 1) {
+        async function fetchInvoiceData(filterCriteria = {}, page = 1, forceRefresh = false) {
             const loading = document.getElementById('invoice-loading');
             const tableContainer = document.getElementById('invoice-table-container');
             const noData = document.getElementById('invoice-no-data');
 
-            // If we already have data, just apply filters client-side
-            if (invoiceFilterManager.getAllData().length > 0) {
+            // If we already have data and not forcing refresh, just apply filters client-side
+            if (!forceRefresh && invoiceFilterManager.getAllData().length > 0) {
+                console.log('Using cached invoice data');
                 applyInvoiceFiltersClientSide(filterCriteria);
                 return;
             }
@@ -4698,13 +4942,14 @@
         /**
          * Fetch Quotation Data from n8n - With client-side filtering
          */
-        async function fetchQuotationData(filterCriteria = {}, page = 1) {
+        async function fetchQuotationData(filterCriteria = {}, page = 1, forceRefresh = false) {
             const loading = document.getElementById('quotation-loading');
             const tableContainer = document.getElementById('quotation-table-container');
             const noData = document.getElementById('quotation-no-data');
 
-            // If we already have data, just apply filters client-side
-            if (quotationFilterManager.getAllData().length > 0) {
+            // If we already have data and not forcing refresh, just apply filters client-side
+            if (!forceRefresh && quotationFilterManager.getAllData().length > 0) {
+                console.log('Using cached quotation data');
                 applyQuotationFiltersClientSide(filterCriteria);
                 return;
             }
@@ -5189,6 +5434,11 @@
          * Export to CSV
          */
         function exportToCSV(type) {
+            if (type === 'purchaseorders') {
+                exportPurchaseOrdersToCSV();
+                return;
+            }
+
             const data = type === 'invoices' ? invoiceData : quotationData;
             if (data.length === 0) {
                 alert('No data to export');
@@ -5371,6 +5621,368 @@
         // Create debounced versions of preview updates for better performance
         const debouncedUpdatePreview = debounce(updatePreview, 300);
         const debouncedUpdateQuotationPreview = debounce(updateQuotationPreview, 300);
+
+        // ==========================================
+        // PURCHASE ORDERS DATABASE FUNCTIONALITY
+        // ==========================================
+
+        let poSortField = 'created_at';
+        let poSortOrder = 'desc';
+        let poCustomerDropdown = null;
+        let poStatusDropdown = null;
+
+        // Initialize Purchase Orders FilterManager with DataMapper
+        const poDataMapper = new DataMapper({
+            po_number: ['po_number', 'PO Number', 'po'],
+            customer_name: ['customer_name', 'Customer Name', 'customer'],
+            customer_company: ['customer_company', 'Customer Company', 'company'],
+            total_amount: ['total_amount', 'Total Amount', 'amount', 'grand_total'],
+            status: ['status', 'Status'],
+            confidence_score: ['confidence_score', 'Confidence Score', 'confidence'],
+            created_at: ['created_at', 'Created At', 'date', 'created_date'],
+            google_drive_link: ['google_drive_link', 'Google Drive Link', 'drive_link', 'link']
+        });
+
+        const poFilterManager = new FilterManager('purchaseOrder');
+
+        /**
+         * Load Purchase Order Database Page
+         */
+        async function loadPurchaseOrderDatabase() {
+            navigateTo('purchaseOrderDatabase');
+            // Force refresh to ensure we get fresh data from n8n
+            await fetchPurchaseOrderData({}, 1, true);
+        }
+
+        /**
+         * Fetch Purchase Order Data from n8n - With client-side filtering
+         */
+        async function fetchPurchaseOrderData(filterCriteria = {}, page = 1, forceRefresh = false) {
+            const loading = document.getElementById('po-loading');
+            const tableContainer = document.getElementById('po-table-container');
+            const noData = document.getElementById('po-no-data');
+
+            // If we already have data and not forcing refresh, just apply filters client-side
+            if (!forceRefresh && poFilterManager.getAllData().length > 0) {
+                console.log('Using cached purchase order data');
+                applyPurchaseOrderFiltersClientSide(filterCriteria);
+                return;
+            }
+
+            // Otherwise, fetch from backend
+            loading.style.display = 'block';
+            tableContainer.style.display = 'none';
+            noData.style.display = 'none';
+
+            try {
+                console.log('Fetching ALL purchase order data from:', PURCHASE_ORDER_DATABASE_URL);
+
+                // Use POST method like Invoice/Quotation workflows
+                const response = await fetch(PURCHASE_ORDER_DATABASE_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filters: {},  // Get ALL data, filter client-side
+                        sort: { field: poSortField, order: poSortOrder },
+                        page: 1,
+                        limit: 10000  // Get all records
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Expected JSON response from n8n webhook');
+                }
+
+                let result = await response.json();
+                console.log('Received purchase order data (raw):', result);
+
+                // Handle array response (n8n returns array with single object)
+                if (Array.isArray(result) && result.length > 0) {
+                    result = result[0];
+                }
+
+                // Extract data - handle both 'data' and 'purchase_orders' fields
+                let purchaseOrdersArray = null;
+                if (result.success && result.data) {
+                    purchaseOrdersArray = result.data;
+                } else if (result.success && result.purchase_orders) {
+                    purchaseOrdersArray = result.purchase_orders;
+                } else if (Array.isArray(result)) {
+                    purchaseOrdersArray = result;
+                }
+
+                if (purchaseOrdersArray && purchaseOrdersArray.length >= 0) {
+                    // Analyze raw data to see field names
+                    poDataMapper.analyzeData(purchaseOrdersArray);
+
+                    // Normalize the data using DataMapper
+                    const normalizedData = poDataMapper.normalizeData(purchaseOrdersArray);
+                    console.log('Normalized purchase order data:', normalizedData);
+
+                    // Set normalized data in FilterManager
+                    poFilterManager.setData(normalizedData);
+
+                    // Initialize dropdowns
+                    initializePurchaseOrderDropdowns();
+
+                    // Apply any existing filter criteria
+                    applyPurchaseOrderFiltersClientSide(filterCriteria);
+
+                } else {
+                    throw new Error('Response missing purchase orders data. Got: ' + JSON.stringify(result).substring(0, 200));
+                }
+            } catch (error) {
+                console.error('Error fetching purchase order data:', error);
+                loading.style.display = 'none';
+                noData.style.display = 'block';
+
+                alert('Failed to load purchase order data.\n\nError: ' + error.message + '\n\nPlease check:\n1. n8n workflow is Active\n2. Webhook URL is correct: ' + PURCHASE_ORDER_DATABASE_URL + '\n3. Check browser console (F12) for details');
+            }
+        }
+
+        /**
+         * Apply filters client-side using FilterManager
+         */
+        function applyPurchaseOrderFiltersClientSide(criteria) {
+            const loading = document.getElementById('po-loading');
+            const tableContainer = document.getElementById('po-table-container');
+            const noData = document.getElementById('po-no-data');
+
+            loading.style.display = 'block';
+
+            // Apply filters
+            const filtered = poFilterManager.applyFilters(criteria);
+
+            // Sort data
+            filtered.sort((a, b) => {
+                let aVal = a[poSortField];
+                let bVal = b[poSortField];
+
+                // Handle dates
+                if (poSortField.includes('date') || poSortField === 'created_at') {
+                    aVal = new Date(aVal || 0);
+                    bVal = new Date(bVal || 0);
+                } else if (poSortField.includes('amount') || poSortField.includes('total') || poSortField === 'confidence_score') {
+                    aVal = parseFloat(aVal || 0);
+                    bVal = parseFloat(bVal || 0);
+                }
+
+                if (poSortOrder === 'asc') {
+                    return aVal > bVal ? 1 : -1;
+                } else {
+                    return aVal < bVal ? 1 : -1;
+                }
+            });
+
+            // Update counts
+            const stats = poFilterManager.getStats();
+            document.getElementById('po-showing-count').textContent = stats.filtered;
+            document.getElementById('po-db-total-count').textContent = stats.total;
+
+            // Render table
+            renderPurchaseOrdersTable(filtered);
+
+            // Update UI
+            loading.style.display = 'none';
+            if (filtered.length > 0) {
+                tableContainer.style.display = 'block';
+                noData.style.display = 'none';
+            } else {
+                tableContainer.style.display = 'none';
+                noData.style.display = 'block';
+            }
+        }
+
+        /**
+         * Initialize purchase order filter dropdowns
+         */
+        function initializePurchaseOrderDropdowns() {
+            if (!poCustomerDropdown) {
+                poCustomerDropdown = new SearchableDropdown('po-customer-dropdown', {
+                    multiSelect: true,
+                    onChange: (selected) => {
+                        console.log('PO customers selected:', selected);
+                        applyPurchaseOrderFilters();
+                    }
+                });
+                poFilterManager.registerDropdown('customer', poCustomerDropdown);
+            }
+
+            if (!poStatusDropdown) {
+                poStatusDropdown = new SearchableDropdown('po-status-dropdown', {
+                    multiSelect: true,
+                    onChange: (selected) => {
+                        console.log('PO statuses selected:', selected);
+                        applyPurchaseOrderFilters();
+                    }
+                });
+                poFilterManager.registerDropdown('status', poStatusDropdown);
+            }
+
+            // Extract and set options from actual data
+            poFilterManager.extractFilterOptions();
+
+            // Log what was extracted for debugging
+            const allData = poFilterManager.getAllData();
+            const customers = [...new Set(allData.map(po => po.customer_name).filter(Boolean))];
+            const statuses = [...new Set(allData.map(po => po.status).filter(Boolean))];
+            console.log('Successfully populated PO filters:');
+            console.log('- Customers found:', customers.length, customers);
+            console.log('- Statuses found:', statuses.length, statuses);
+        }
+
+        /**
+         * Apply Purchase Order Filters
+         */
+        function applyPurchaseOrderFilters() {
+            const filters = {
+                dateRange: {
+                    from: document.getElementById('po-date-from').value,
+                    to: document.getElementById('po-date-to').value
+                },
+                amountRange: {
+                    min: document.getElementById('po-total-min').value,
+                    max: document.getElementById('po-total-max').value
+                }
+            };
+
+            applyPurchaseOrderFiltersClientSide(filters);
+        }
+
+        /**
+         * Clear Purchase Order Filters
+         */
+        function clearPurchaseOrderFilters() {
+            document.getElementById('po-date-from').value = '';
+            document.getElementById('po-date-to').value = '';
+            document.getElementById('po-total-min').value = '';
+            document.getElementById('po-total-max').value = '';
+
+            if (poCustomerDropdown) poCustomerDropdown.clearSelection();
+            if (poStatusDropdown) poStatusDropdown.clearSelection();
+
+            applyPurchaseOrderFiltersClientSide({});
+        }
+
+        /**
+         * Sort Purchase Orders
+         */
+        function sortPurchaseOrders(field) {
+            if (poSortField === field) {
+                poSortOrder = poSortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                poSortField = field;
+                poSortOrder = 'asc';
+            }
+            applyPurchaseOrderFiltersClientSide(poFilterManager.getCurrentFilters());
+        }
+
+        /**
+         * Render Purchase Orders Table
+         */
+        function renderPurchaseOrdersTable(data) {
+            const tbody = document.getElementById('po-table-body');
+            tbody.innerHTML = '';
+
+            data.forEach(po => {
+                const row = document.createElement('tr');
+
+                // Format date
+                const dateCreated = po.created_at ? new Date(po.created_at).toLocaleDateString('en-IN') : 'N/A';
+
+                // Format amount
+                const amount = parseFloat(po.total_amount) || 0;
+                const formattedAmount = amount.toLocaleString('en-IN', {maximumFractionDigits: 2});
+
+                // Status badge
+                const statusClass = po.status === 'Auto-Processed' ? 'status-completed' : 'status-pending';
+
+                // Confidence score
+                const confidence = parseFloat(po.confidence_score) || 0;
+                const confidencePercent = (confidence * 100).toFixed(0);
+                const confidenceClass = confidence >= 0.9 ? 'confidence-high' : confidence >= 0.7 ? 'confidence-medium' : 'confidence-low';
+
+                row.innerHTML = `
+                    <td>${dateCreated}</td>
+                    <td><strong>${po.po_number || 'N/A'}</strong></td>
+                    <td>${po.customer_name || 'N/A'}</td>
+                    <td>₹ ${formattedAmount}</td>
+                    <td><span class="status-badge ${statusClass}">${po.status || 'Unknown'}</span></td>
+                    <td><span class="confidence-badge ${confidenceClass}">${confidencePercent}%</span></td>
+                    <td>
+                        <button class="btn-view" onclick="viewPurchaseOrder('${po.google_drive_link}')" title="View PO in Google Drive">
+                            👁️ View
+                        </button>
+                    </td>
+                `;
+
+                tbody.appendChild(row);
+            });
+        }
+
+        /**
+         * View Purchase Order in Google Drive
+         */
+        function viewPurchaseOrder(driveLink) {
+            if (driveLink && driveLink !== '') {
+                window.open(driveLink, '_blank');
+            } else {
+                alert('Google Drive link not available for this purchase order.');
+            }
+        }
+
+        /**
+         * Refresh Purchase Order Data
+         */
+        async function refreshPurchaseOrderData() {
+            poFilterManager.setData([]);
+            await fetchPurchaseOrderData();
+        }
+
+        /**
+         * Export Purchase Orders to CSV
+         */
+        function exportPurchaseOrdersToCSV() {
+            const filtered = poFilterManager.applyFilters(poFilterManager.getCurrentFilters());
+
+            if (filtered.length === 0) {
+                alert('No data to export');
+                return;
+            }
+
+            const headers = ['Date Created', 'PO Number', 'Customer Name', 'Grand Total', 'Status', 'Confidence', 'Google Drive Link'];
+            const rows = filtered.map(po => [
+                po.created_at ? new Date(po.created_at).toLocaleDateString('en-IN') : '',
+                po.po_number || '',
+                po.customer_name || '',
+                po.total_amount || '',
+                po.status || '',
+                po.confidence_score || '',
+                po.google_drive_link || ''
+            ]);
+
+            let csvContent = headers.join(',') + '\n';
+            rows.forEach(row => {
+                csvContent += row.map(cell => `"${cell}"`).join(',') + '\n';
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `purchase_orders_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // ==========================================
+        // END PURCHASE ORDERS FUNCTIONALITY
+        // ==========================================
     </script>
 </body>
 </html>
