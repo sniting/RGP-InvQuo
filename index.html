@@ -1846,17 +1846,6 @@
                     </div>
 
                     <div class="service-card"
-                         onclick="navigateTo('databaseSelection')"
-                         onkeypress="handleCardKeyPress(event, 'databaseSelection')"
-                         tabindex="0"
-                         role="button"
-                         aria-label="Database feature - View invoices and quotations">
-                        <span class="service-icon" aria-hidden="true">🗄️</span>
-                        <h3 class="service-title">Database</h3>
-                        <p class="service-description">View all invoices and quotations</p>
-                    </div>
-
-                    <div class="service-card"
                          onclick="navigateTo('billsSelection')"
                          onkeypress="handleCardKeyPress(event, 'bills')"
                          tabindex="0"
@@ -1865,6 +1854,17 @@
                         <span class="service-icon" aria-hidden="true">📸</span>
                         <h3 class="service-title">Bills</h3>
                         <p class="service-description">Capture & process bills with AI</p>
+                    </div>
+
+                    <div class="service-card"
+                         onclick="navigateTo('databaseSelection')"
+                         onkeypress="handleCardKeyPress(event, 'databaseSelection')"
+                         tabindex="0"
+                         role="button"
+                         aria-label="Database feature - View invoices and quotations">
+                        <span class="service-icon" aria-hidden="true">🗄️</span>
+                        <h3 class="service-title">Database</h3>
+                        <p class="service-description">View all invoices and quotations</p>
                     </div>
                 </div>
             </div>
@@ -6851,14 +6851,10 @@
 
             resultDiv.innerHTML = `
                 <h3>✅ Labour Bill Processed Successfully!</h3>
-                <div class="result-details">
-                    <p><strong>Bill Number:</strong> <span>${data.bill_number || 'N/A'}</span></p>
-                    <p><strong>Contractor:</strong> <span>${data.worker_contractor_name || 'N/A'}</span></p>
-                    <p><strong>Amount:</strong> <span>₹${parseFloat(data.total_amount || 0).toLocaleString('en-IN')}</span></p>
-                    <p><strong>Status:</strong> <span style="color: var(--success);">${data.status || 'Auto-Processed'}</span></p>
-                    <p><strong>Confidence:</strong> <span>${((data.confidence_score || 0) * 100).toFixed(0)}%</span></p>
-                </div>
-                <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+                <p style="color: var(--text-secondary); margin: 20px 0; text-align: center;">
+                    Your labour bill has been uploaded and processed. You can view it in the database.
+                </p>
+                <div style="margin-top: 30px; display: flex; gap: 10px; justify-content: center;">
                     <button onclick="clearLabourBillFile()" class="btn-secondary">Upload Another</button>
                     <button onclick="navigateTo('labourBillsDatabase');" class="btn-primary">View Database</button>
                 </div>
@@ -7041,14 +7037,10 @@
 
             resultDiv.innerHTML = `
                 <h3>✅ Purchase Bill Processed Successfully!</h3>
-                <div class="result-details">
-                    <p><strong>Bill Number:</strong> <span>${data.bill_number || 'N/A'}</span></p>
-                    <p><strong>Vendor:</strong> <span>${data.vendor_name || 'N/A'}</span></p>
-                    <p><strong>Amount:</strong> <span>₹${parseFloat(data.total_amount || 0).toLocaleString('en-IN')}</span></p>
-                    <p><strong>Status:</strong> <span style="color: var(--success);">${data.status || 'Auto-Processed'}</span></p>
-                    <p><strong>Confidence:</strong> <span>${((data.confidence_score || 0) * 100).toFixed(0)}%</span></p>
-                </div>
-                <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+                <p style="color: var(--text-secondary); margin: 20px 0; text-align: center;">
+                    Your purchase bill has been uploaded and processed. You can view it in the database.
+                </p>
+                <div style="margin-top: 30px; display: flex; gap: 10px; justify-content: center;">
                     <button onclick="clearPurchaseBillFile()" class="btn-secondary">Upload Another</button>
                     <button onclick="navigateTo('purchaseBillsDatabase');" class="btn-primary">View Database</button>
                 </div>
@@ -7145,6 +7137,9 @@
                 return;
             }
 
+            // Populate worker dropdown with unique names
+            populateLabourWorkerDropdown(data.data);
+
             let html = '';
             data.data.forEach(bill => {
                 html += `
@@ -7166,6 +7161,61 @@
         }
 
         /**
+         * Populate Labour Worker Dropdown
+         */
+        function populateLabourWorkerDropdown(bills) {
+            const dropdown = document.querySelector('#lb-worker-dropdown .searchable-dropdown-options');
+            if (!dropdown) return;
+
+            // Get unique worker names
+            const workers = [...new Set(bills.map(bill =>
+                bill['Worker/Contractor Name'] || bill.worker_contractor_name
+            ).filter(name => name && name !== 'N/A'))].sort();
+
+            let html = '<div class="searchable-dropdown-option" onclick="selectLabourWorker(null)">All Workers</div>';
+            workers.forEach(worker => {
+                html += `<div class="searchable-dropdown-option" onclick="selectLabourWorker('${worker.replace(/'/g, "\\'")}')">${worker}</div>`;
+            });
+
+            dropdown.innerHTML = html;
+        }
+
+        /**
+         * Select Labour Worker Filter
+         */
+        function selectLabourWorker(worker) {
+            const dropdown = document.getElementById('lb-worker-dropdown');
+            const text = dropdown.querySelector('.dropdown-text');
+
+            text.textContent = worker || 'All Workers';
+            dropdown.querySelector('.searchable-dropdown-menu').classList.remove('active');
+
+            // Apply filter
+            labourBillsFilters.worker_name = worker;
+            applyLabourBillsFilters();
+        }
+
+        /**
+         * Toggle Labour Worker Dropdown
+         */
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropdown = document.getElementById('lb-worker-dropdown');
+            if (dropdown) {
+                dropdown.querySelector('.searchable-dropdown-input').addEventListener('click', function() {
+                    this.parentElement.querySelector('.searchable-dropdown-menu').classList.toggle('active');
+                });
+            }
+
+            // Toggle Purchase Vendor Dropdown
+            const pbDropdown = document.getElementById('pb-vendor-dropdown');
+            if (pbDropdown) {
+                pbDropdown.querySelector('.searchable-dropdown-input').addEventListener('click', function() {
+                    this.parentElement.querySelector('.searchable-dropdown-menu').classList.toggle('active');
+                });
+            }
+        });
+
+        /**
          * Update Labour Bills Stats
          */
         function updateLabourBillsStats(data) {
@@ -7184,20 +7234,83 @@
          * Apply Labour Bills Filters
          */
         function applyLabourBillsFilters() {
-            const filters = {};
+            if (!labourBillsData || !labourBillsData.data) return;
 
+            const tbody = document.getElementById('lb-table-body');
+            const noData = document.getElementById('lb-no-data');
+            const tableContainer = document.getElementById('lb-table-container');
+
+            // Get filter values
+            const workerName = labourBillsFilters.worker_name;
             const dateFrom = document.getElementById('lb-date-from').value;
             const dateTo = document.getElementById('lb-date-to').value;
             const minAmount = document.getElementById('lb-total-min').value;
             const maxAmount = document.getElementById('lb-total-max').value;
 
-            if (dateFrom) filters.date_from = dateFrom;
-            if (dateTo) filters.date_to = dateTo;
-            if (minAmount) filters.min_amount = parseFloat(minAmount);
-            if (maxAmount) filters.max_amount = parseFloat(maxAmount);
+            // Filter data
+            let filtered = labourBillsData.data.filter(bill => {
+                // Worker name filter
+                if (workerName) {
+                    const billWorker = bill['Worker/Contractor Name'] || bill.worker_contractor_name;
+                    if (billWorker !== workerName) return false;
+                }
 
-            labourBillsFilters = filters;
-            fetchLabourBillsData(filters, 1);
+                // Date range filter
+                if (dateFrom || dateTo) {
+                    const billDate = bill['Bill Date'] || bill.bill_date;
+                    if (billDate && billDate !== 'N/A') {
+                        const [day, month, year] = billDate.split('/');
+                        const billDateObj = new Date(`${year}-${month}-${day}`);
+
+                        if (dateFrom) {
+                            const fromDate = new Date(dateFrom);
+                            if (billDateObj < fromDate) return false;
+                        }
+
+                        if (dateTo) {
+                            const toDate = new Date(dateTo);
+                            if (billDateObj > toDate) return false;
+                        }
+                    }
+                }
+
+                // Amount range filter
+                const amount = parseFloat(bill['Total Amount'] || bill.total_amount || 0);
+
+                if (minAmount && amount < parseFloat(minAmount)) return false;
+                if (maxAmount && amount > parseFloat(maxAmount)) return false;
+
+                return true;
+            });
+
+            // Update counts
+            document.getElementById('lb-showing-count').textContent = filtered.length;
+
+            // Render filtered results
+            if (filtered.length === 0) {
+                tableContainer.style.display = 'none';
+                noData.style.display = 'flex';
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(bill => {
+                html += `
+                    <tr>
+                        <td>${bill['Bill Date'] || bill.bill_date || 'N/A'}</td>
+                        <td><strong>${bill['Bill Number'] || bill.bill_number || 'N/A'}</strong></td>
+                        <td>${bill['Worker/Contractor Name'] || bill.worker_contractor_name || 'N/A'}</td>
+                        <td>${bill['Work Description'] || bill.work_description || 'N/A'}</td>
+                        <td>₹${parseFloat(bill['Total Amount'] || bill.total_amount || 0).toLocaleString('en-IN')}</td>
+                        <td><span class="status-badge ${(bill.Status || bill.status || '').includes('Auto') ? 'status-success' : 'status-pending'}">${bill.Status || bill.status || 'N/A'}</span></td>
+                        <td><button onclick="window.open('${bill['Google Drive Link'] || bill.google_drive_link || '#'}', '_blank')" class="btn-primary" style="padding: 5px 15px;">👁️ View</button></td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+            tableContainer.style.display = 'block';
+            noData.style.display = 'none';
         }
 
         /**
@@ -7209,8 +7322,14 @@
             document.getElementById('lb-total-min').value = '';
             document.getElementById('lb-total-max').value = '';
 
+            // Reset dropdown
+            const dropdown = document.getElementById('lb-worker-dropdown');
+            if (dropdown) {
+                dropdown.querySelector('.dropdown-text').textContent = 'All Workers';
+            }
+
             labourBillsFilters = {};
-            fetchLabourBillsData({}, 1);
+            renderLabourBillsTable(labourBillsData);
         }
 
         /**
@@ -7233,6 +7352,11 @@
         async function loadPurchaseBillsDatabase() {
             navigateTo('purchaseBillsDatabase');
             await fetchPurchaseBillsData({}, 1, true);
+
+            // Populate vendor dropdown after data is loaded
+            if (purchaseBillsData && purchaseBillsData.data) {
+                populatePurchaseVendorDropdown(purchaseBillsData.data);
+            }
         }
 
         /**
@@ -7299,6 +7423,9 @@
                 return;
             }
 
+            // Populate vendor dropdown when data is available
+            populatePurchaseVendorDropdown(data.data);
+
             let html = '';
             data.data.forEach(bill => {
                 html += `
@@ -7335,23 +7462,121 @@
         }
 
         /**
-         * Apply Purchase Bills Filters
+         * Populate Purchase Vendor Dropdown
+         */
+        function populatePurchaseVendorDropdown(bills) {
+            const dropdown = document.querySelector('#pb-vendor-dropdown .searchable-dropdown-options');
+            if (!dropdown) return;
+
+            // Get unique vendor names from the data
+            const vendors = [...new Set(bills.map(bill =>
+                bill['Vendor Name'] || bill.vendor_name
+            ).filter(name => name && name !== 'N/A'))].sort();
+
+            let html = '<div class="searchable-dropdown-option" onclick="selectPurchaseVendor(null)">All Vendors</div>';
+            vendors.forEach(vendor => {
+                html += `<div class="searchable-dropdown-option" onclick="selectPurchaseVendor('${vendor.replace(/'/g, "\\'")}')">${vendor}</div>`;
+            });
+
+            dropdown.innerHTML = html;
+        }
+
+        /**
+         * Select Purchase Vendor from Dropdown
+         */
+        function selectPurchaseVendor(vendor) {
+            const dropdown = document.getElementById('pb-vendor-dropdown');
+            const text = dropdown.querySelector('.dropdown-text');
+
+            text.textContent = vendor || 'All Vendors';
+            dropdown.querySelector('.searchable-dropdown-menu').classList.remove('active');
+
+            purchaseBillsFilters.vendor_name = vendor;
+            applyPurchaseBillsFilters();
+        }
+
+        /**
+         * Apply Purchase Bills Filters (Client-Side)
          */
         function applyPurchaseBillsFilters() {
-            const filters = {};
+            if (!purchaseBillsData || !purchaseBillsData.data) return;
 
+            const vendorName = purchaseBillsFilters.vendor_name;
             const dateFrom = document.getElementById('pb-date-from').value;
             const dateTo = document.getElementById('pb-date-to').value;
             const minAmount = document.getElementById('pb-total-min').value;
             const maxAmount = document.getElementById('pb-total-max').value;
 
-            if (dateFrom) filters.date_from = dateFrom;
-            if (dateTo) filters.date_to = dateTo;
-            if (minAmount) filters.min_amount = parseFloat(minAmount);
-            if (maxAmount) filters.max_amount = parseFloat(maxAmount);
+            // Filter the data array client-side
+            let filtered = purchaseBillsData.data.filter(bill => {
+                // Vendor name filter
+                if (vendorName) {
+                    const billVendor = bill['Vendor Name'] || bill.vendor_name;
+                    if (billVendor !== vendorName) return false;
+                }
 
-            purchaseBillsFilters = filters;
-            fetchPurchaseBillsData(filters, 1);
+                // Date range filter (parse DD/MM/YYYY format)
+                if (dateFrom || dateTo) {
+                    const billDate = bill['Bill Date'] || bill.bill_date;
+                    if (billDate && billDate !== 'N/A') {
+                        const [day, month, year] = billDate.split('/');
+                        const billDateObj = new Date(`${year}-${month}-${day}`);
+
+                        if (dateFrom) {
+                            const fromDate = new Date(dateFrom);
+                            if (billDateObj < fromDate) return false;
+                        }
+
+                        if (dateTo) {
+                            const toDate = new Date(dateTo);
+                            if (billDateObj > toDate) return false;
+                        }
+                    }
+                }
+
+                // Amount range filter
+                const amount = parseFloat(bill['Total Amount'] || bill.total_amount || 0);
+                if (minAmount && amount < parseFloat(minAmount)) return false;
+                if (maxAmount && amount > parseFloat(maxAmount)) return false;
+
+                return true;
+            });
+
+            // Update the showing count
+            document.getElementById('pb-showing-count').textContent = filtered.length;
+
+            // Re-render table with filtered data
+            const loading = document.getElementById('pb-loading');
+            const tableContainer = document.getElementById('pb-table-container');
+            const noData = document.getElementById('pb-no-data');
+            const tbody = document.getElementById('pb-table-body');
+
+            loading.style.display = 'none';
+
+            if (filtered.length === 0) {
+                tableContainer.style.display = 'none';
+                noData.style.display = 'flex';
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(bill => {
+                html += `
+                    <tr>
+                        <td>${bill['Bill Date'] || bill.bill_date || 'N/A'}</td>
+                        <td><strong>${bill['Bill Number'] || bill.bill_number || 'N/A'}</strong></td>
+                        <td>${bill['Vendor Name'] || bill.vendor_name || 'N/A'}</td>
+                        <td>${bill['Items Description'] || bill.items_description || 'N/A'}</td>
+                        <td>₹${parseFloat(bill['Total Amount'] || bill.total_amount || 0).toLocaleString('en-IN')}</td>
+                        <td><span class="status-badge ${(bill.Status || bill.status || '').includes('Auto') ? 'status-success' : 'status-pending'}">${bill.Status || bill.status || 'N/A'}</span></td>
+                        <td><button onclick="window.open('${bill['Google Drive Link'] || bill.google_drive_link || '#'}', '_blank')" class="btn-primary" style="padding: 5px 15px;">👁️ View</button></td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+            tableContainer.style.display = 'block';
+            noData.style.display = 'none';
         }
 
         /**
@@ -7363,8 +7588,14 @@
             document.getElementById('pb-total-min').value = '';
             document.getElementById('pb-total-max').value = '';
 
+            // Reset dropdown
+            const dropdown = document.getElementById('pb-vendor-dropdown');
+            if (dropdown) {
+                dropdown.querySelector('.dropdown-text').textContent = 'All Vendors';
+            }
+
             purchaseBillsFilters = {};
-            fetchPurchaseBillsData({}, 1);
+            renderPurchaseBillsTable(purchaseBillsData);
         }
 
         /**
