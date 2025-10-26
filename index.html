@@ -1595,6 +1595,218 @@
             background-color: #fff3cd;
             color: #856404;
         }
+
+        /* ==================== BILLS SYSTEM STYLES ==================== */
+
+        /* Bills Modal Styles */
+        .bills-type-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .bill-type-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px solid var(--border);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .bill-type-card:hover,
+        .bill-type-card:focus {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+            outline: none;
+        }
+
+        .bill-type-icon {
+            font-size: 3em;
+            display: block;
+            margin-bottom: 15px;
+        }
+
+        .bill-type-card h3 {
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .bill-type-card p {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        /* Bill Upload Area */
+        .bill-upload-area {
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px dashed var(--border);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .bill-upload-area h3 {
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .upload-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .upload-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .camera-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .camera-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .file-btn {
+            background: linear-gradient(135deg, var(--primary), #1e40af);
+            color: white;
+        }
+
+        .file-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        /* File Preview */
+        .bill-file-preview {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .preview-header h4 {
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .preview-content {
+            margin: 15px 0;
+        }
+
+        .preview-content img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .file-info {
+            background: rgba(59, 130, 246, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .file-info p {
+            margin: 5px 0;
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+
+        .file-info strong {
+            color: var(--text-primary);
+        }
+
+        /* Upload Progress */
+        .upload-progress {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .progress-bar {
+            background: rgba(15, 23, 42, 0.6);
+            height: 8px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        /* Upload Result */
+        .upload-result {
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .upload-result.success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid var(--success);
+        }
+
+        .upload-result.error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid var(--error);
+        }
+
+        .upload-result h3 {
+            margin-bottom: 10px;
+        }
+
+        .upload-result .result-details {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .upload-result .result-details p {
+            margin: 8px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .upload-result .result-details strong {
+            color: var(--primary);
+        }
     </style>
 </head>
 <body>
@@ -1645,17 +1857,211 @@
                     </div>
 
                     <div class="service-card"
-                         onclick="showComingSoon()"
-                         onkeypress="handleCardKeyPress(event, 'comingSoon')"
+                         onclick="navigateTo('billsSelection')"
+                         onkeypress="handleCardKeyPress(event, 'bills')"
                          tabindex="0"
                          role="button"
-                         aria-label="Other Documents feature - Coming Soon">
-                        <span class="service-icon" aria-hidden="true">📄</span>
-                        <h3 class="service-title">Other Documents</h3>
-                        <p class="service-description">Manage additional documents</p>
-                        <span class="coming-soon" aria-label="Coming Soon">Coming Soon</span>
+                         aria-label="Bills - Upload and process bills automatically">
+                        <span class="service-icon" aria-hidden="true">📸</span>
+                        <h3 class="service-title">Bills</h3>
+                        <p class="service-description">Capture & process bills with AI</p>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bills Selection Page -->
+    <div id="billsSelection" class="page">
+        <button class="back-button"
+                onclick="navigateTo('launchPage')"
+                aria-label="Back to Dashboard">
+            <span aria-hidden="true">←</span>
+            <span>Back to Dashboard</span>
+        </button>
+
+        <div class="database-selection-container">
+            <h1 class="database-main-title">📸 Bills</h1>
+            <p class="database-subtitle">Select the type of bill you want to upload</p>
+
+            <div class="database-cards-grid">
+                <div class="database-card-large"
+                     onclick="navigateTo('labourBillsUpload')"
+                     tabindex="0"
+                     role="button"
+                     aria-label="Upload Labour Bills">
+                    <div class="database-card-icon">👷</div>
+                    <h2>Labour Bills</h2>
+                    <p>Upload contractor & worker bills</p>
+                    <button class="btn-database">Upload Labour Bill →</button>
+                </div>
+
+                <div class="database-card-large"
+                     onclick="navigateTo('purchaseBillsUpload')"
+                     tabindex="0"
+                     role="button"
+                     aria-label="Upload Purchase Bills">
+                    <div class="database-card-icon">🛒</div>
+                    <h2>Purchase Bills</h2>
+                    <p>Upload vendor & supplier bills</p>
+                    <button class="btn-database">Upload Purchase Bill →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Labour Bills Upload Page -->
+    <div id="labourBillsUpload" class="page">
+        <button class="back-button"
+                onclick="navigateTo('billsSelection')"
+                aria-label="Back to Bills Selection">
+            <span aria-hidden="true">←</span>
+            <span>Back to Bills</span>
+        </button>
+
+        <div class="database-selection-container">
+            <h1 class="database-main-title">👷 Labour Bills</h1>
+            <p class="database-subtitle">Upload contractor & worker bills</p>
+
+            <div style="max-width: 700px; margin: 50px auto;">
+                <!-- File Input Area -->
+                <div class="bill-upload-area">
+                    <div class="upload-icon">📁</div>
+                    <h3>Choose how to upload</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                        Supported formats: JPG, PNG, PDF
+                    </p>
+
+                    <div class="upload-buttons">
+                        <label for="labourCameraInput" class="upload-btn camera-btn">
+                            <span>📸 Take Photo</span>
+                            <input type="file"
+                                   id="labourCameraInput"
+                                   accept="image/*"
+                                   capture="environment"
+                                   style="display: none;"
+                                   onchange="handleLabourBillFileSelect(event)">
+                        </label>
+
+                        <label for="labourFileInput" class="upload-btn file-btn">
+                            <span>📄 Choose File</span>
+                            <input type="file"
+                                   id="labourFileInput"
+                                   accept="image/*,.pdf"
+                                   style="display: none;"
+                                   onchange="handleLabourBillFileSelect(event)">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- File Preview -->
+                <div id="labourFilePreview" class="bill-file-preview" style="display: none;">
+                    <div class="preview-header">
+                        <h4>Selected File</h4>
+                        <button onclick="clearLabourBillFile()" class="btn-secondary" style="padding: 5px 15px;">
+                            Clear
+                        </button>
+                    </div>
+                    <div id="labourPreviewContent" class="preview-content"></div>
+                    <div id="labourFileInfo" class="file-info"></div>
+                </div>
+
+                <!-- Upload Button -->
+                <div id="labourUploadButton" style="display: none; margin-top: 20px;">
+                    <button onclick="uploadLabourBill()" class="btn-primary" id="uploadLabourBillBtn" style="width: 100%;">
+                        <span class="btn-text">💾 Save & Process</span>
+                        <span class="btn-spinner" style="display: none;">Processing...</span>
+                    </button>
+                </div>
+
+                <!-- Progress -->
+                <div id="labourUploadProgress" class="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="labourProgressFill"></div>
+                    </div>
+                    <p id="labourProgressText">Uploading...</p>
+                </div>
+
+                <!-- Result -->
+                <div id="labourUploadResult" class="upload-result" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Bills Upload Page -->
+    <div id="purchaseBillsUpload" class="page">
+        <button class="back-button"
+                onclick="navigateTo('billsSelection')"
+                aria-label="Back to Bills Selection">
+            <span aria-hidden="true">←</span>
+            <span>Back to Bills</span>
+        </button>
+
+        <div class="database-selection-container">
+            <h1 class="database-main-title">🛒 Purchase Bills</h1>
+            <p class="database-subtitle">Upload vendor & supplier bills</p>
+
+            <div style="max-width: 700px; margin: 50px auto;">
+                <!-- File Input Area -->
+                <div class="bill-upload-area">
+                    <div class="upload-icon">📁</div>
+                    <h3>Choose how to upload</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                        Supported formats: JPG, PNG, PDF
+                    </p>
+
+                    <div class="upload-buttons">
+                        <label for="purchaseCameraInput" class="upload-btn camera-btn">
+                            <span>📸 Take Photo</span>
+                            <input type="file"
+                                   id="purchaseCameraInput"
+                                   accept="image/*"
+                                   capture="environment"
+                                   style="display: none;"
+                                   onchange="handlePurchaseBillFileSelect(event)">
+                        </label>
+
+                        <label for="purchaseFileInput" class="upload-btn file-btn">
+                            <span>📄 Choose File</span>
+                            <input type="file"
+                                   id="purchaseFileInput"
+                                   accept="image/*,.pdf"
+                                   style="display: none;"
+                                   onchange="handlePurchaseBillFileSelect(event)">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- File Preview -->
+                <div id="purchaseFilePreview" class="bill-file-preview" style="display: none;">
+                    <div class="preview-header">
+                        <h4>Selected File</h4>
+                        <button onclick="clearPurchaseBillFile()" class="btn-secondary" style="padding: 5px 15px;">
+                            Clear
+                        </button>
+                    </div>
+                    <div id="purchasePreviewContent" class="preview-content"></div>
+                    <div id="purchaseFileInfo" class="file-info"></div>
+                </div>
+
+                <!-- Upload Button -->
+                <div id="purchaseUploadButton" style="display: none; margin-top: 20px;">
+                    <button onclick="uploadPurchaseBill()" class="btn-primary" id="uploadPurchaseBillBtn" style="width: 100%;">
+                        <span class="btn-text">💾 Save & Process</span>
+                        <span class="btn-spinner" style="display: none;">Processing...</span>
+                    </button>
+                </div>
+
+                <!-- Progress -->
+                <div id="purchaseUploadProgress" class="upload-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="purchaseProgressFill"></div>
+                    </div>
+                    <p id="purchaseProgressText">Uploading...</p>
+                </div>
+
+                <!-- Result -->
+                <div id="purchaseUploadResult" class="upload-result" style="display: none;"></div>
             </div>
         </div>
     </div>
@@ -2192,6 +2598,34 @@
                     </div>
                     <button class="btn-database">View Purchase Orders →</button>
                 </div>
+
+                <div class="database-card-large"
+                     onclick="loadLabourBillsDatabase()"
+                     tabindex="0"
+                     role="button"
+                     aria-label="View Labour Bills Database">
+                    <div class="database-card-icon">👷</div>
+                    <h2>Labour Bills</h2>
+                    <p>View and manage labour bills</p>
+                    <div class="database-card-stat">
+                        <span id="labourBillsCount">Loading...</span> bills recorded
+                    </div>
+                    <button class="btn-database">View Database →</button>
+                </div>
+
+                <div class="database-card-large"
+                     onclick="loadPurchaseBillsDatabase()"
+                     tabindex="0"
+                     role="button"
+                     aria-label="View Purchase Bills Database">
+                    <div class="database-card-icon">🛒</div>
+                    <h2>Purchase Bills</h2>
+                    <p>View and manage purchase bills</p>
+                    <div class="database-card-stat">
+                        <span id="purchaseBillsCount">Loading...</span> bills recorded
+                    </div>
+                    <button class="btn-database">View Database →</button>
+                </div>
             </div>
         </div>
     </div>
@@ -2551,6 +2985,252 @@
                 <button id="po-prev-btn" onclick="loadPurchaseOrderPage(currentPurchaseOrderPage - 1)" disabled>← Previous</button>
                 <span id="po-page-info">Page 1 of 1</span>
                 <button id="po-next-btn" onclick="loadPurchaseOrderPage(currentPurchaseOrderPage + 1)" disabled>Next →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Labour Bills Database Page -->
+    <div id="labourBillsDatabase" class="page">
+        <button class="back-button"
+                onclick="navigateTo('databaseSelection')"
+                aria-label="Back to Database Selection">
+            <span aria-hidden="true">←</span>
+            <span>Back to Database</span>
+        </button>
+
+        <div class="database-container">
+            <div class="database-header">
+                <h1>👷 Labour Bills Database</h1>
+                <div class="database-actions">
+                    <button class="btn-secondary" onclick="exportToCSV('labourbills')">📥 Export CSV</button>
+                    <button class="btn-secondary" onclick="refreshLabourBillsData()">🔄 Refresh</button>
+                </div>
+            </div>
+
+            <div class="filters-section">
+                <h3>🔍 Filters</h3>
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label for="lb-worker-filter">Worker/Contractor Name</label>
+                        <div class="searchable-dropdown" id="lb-worker-dropdown">
+                            <div class="searchable-dropdown-input" tabindex="0">
+                                <span class="dropdown-text">All Workers</span>
+                                <span class="dropdown-arrow">▼</span>
+                            </div>
+                            <div class="searchable-dropdown-menu">
+                                <div class="searchable-dropdown-search">
+                                    <input type="text" placeholder="Search workers..." autocomplete="off">
+                                </div>
+                                <div class="searchable-dropdown-options">
+                                    <div class="searchable-dropdown-empty">Loading workers...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="lb-date-from">Date From</label>
+                        <input type="date" id="lb-date-from" onchange="applyLabourBillsFilters()">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="lb-date-to">Date To</label>
+                        <input type="date" id="lb-date-to" onchange="applyLabourBillsFilters()">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="lb-total-min">Min Amount (₹)</label>
+                        <input type="number" id="lb-total-min" placeholder="0" onchange="applyLabourBillsFilters()">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="lb-total-max">Max Amount (₹)</label>
+                        <input type="number" id="lb-total-max" placeholder="Any" onchange="applyLabourBillsFilters()">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="lb-status-filter">Status</label>
+                        <div class="searchable-dropdown" id="lb-status-dropdown">
+                            <div class="searchable-dropdown-input" tabindex="0">
+                                <span class="dropdown-text">All Statuses</span>
+                                <span class="dropdown-arrow">▼</span>
+                            </div>
+                            <div class="searchable-dropdown-menu">
+                                <div class="searchable-dropdown-search">
+                                    <input type="text" placeholder="Search statuses..." autocomplete="off">
+                                </div>
+                                <div class="searchable-dropdown-options">
+                                    <div class="searchable-dropdown-empty">Loading statuses...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-actions-row">
+                    <button class="btn-primary" onclick="applyLabourBillsFilters()">Apply Filters</button>
+                    <button class="btn-secondary" onclick="clearLabourBillsFilters()">Clear All</button>
+                    <div class="filter-summary">
+                        Showing: <strong id="lb-showing-count">0</strong> of <strong id="lb-db-total-count">0</strong> records
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <div id="lb-loading" class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Loading labour bills...</p>
+                </div>
+                <div id="lb-table-container" style="display: none;">
+                    <table class="database-table">
+                        <thead>
+                            <tr>
+                                <th onclick="sortLabourBills('bill_date')">Date ↕</th>
+                                <th onclick="sortLabourBills('bill_number')">Bill Number ↕</th>
+                                <th onclick="sortLabourBills('worker_contractor_name')">Worker/Contractor ↕</th>
+                                <th onclick="sortLabourBills('work_description')">Work Description ↕</th>
+                                <th onclick="sortLabourBills('total_amount')">Total (₹) ↕</th>
+                                <th onclick="sortLabourBills('status')">Status ↕</th>
+                                <th>View</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lb-table-body">
+                        </tbody>
+                    </table>
+                </div>
+                <div id="lb-no-data" class="no-data-state" style="display: none;">
+                    <p>📭 No labour bills found matching your filters</p>
+                    <button class="btn-secondary" onclick="clearLabourBillsFilters()">Clear Filters</button>
+                </div>
+            </div>
+
+            <div class="pagination" id="lb-pagination" style="display: none;">
+                <button id="lb-prev-btn" onclick="loadLabourBillsPage(currentLabourBillsPage - 1)" disabled>← Previous</button>
+                <span id="lb-page-info">Page 1 of 1</span>
+                <button id="lb-next-btn" onclick="loadLabourBillsPage(currentLabourBillsPage + 1)" disabled>Next →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Bills Database Page -->
+    <div id="purchaseBillsDatabase" class="page">
+        <button class="back-button"
+                onclick="navigateTo('databaseSelection')"
+                aria-label="Back to Database Selection">
+            <span aria-hidden="true">←</span>
+            <span>Back to Database</span>
+        </button>
+
+        <div class="database-container">
+            <div class="database-header">
+                <h1>🛒 Purchase Bills Database</h1>
+                <div class="database-actions">
+                    <button class="btn-secondary" onclick="exportToCSV('purchasebills')">📥 Export CSV</button>
+                    <button class="btn-secondary" onclick="refreshPurchaseBillsData()">🔄 Refresh</button>
+                </div>
+            </div>
+
+            <div class="filters-section">
+                <h3>🔍 Filters</h3>
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label for="pb-vendor-filter">Vendor Name</label>
+                        <div class="searchable-dropdown" id="pb-vendor-dropdown">
+                            <div class="searchable-dropdown-input" tabindex="0">
+                                <span class="dropdown-text">All Vendors</span>
+                                <span class="dropdown-arrow">▼</span>
+                            </div>
+                            <div class="searchable-dropdown-menu">
+                                <div class="searchable-dropdown-search">
+                                    <input type="text" placeholder="Search vendors..." autocomplete="off">
+                                </div>
+                                <div class="searchable-dropdown-options">
+                                    <div class="searchable-dropdown-empty">Loading vendors...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="pb-date-from">Date From</label>
+                        <input type="date" id="pb-date-from" onchange="applyPurchaseBillsFilters()">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="pb-date-to">Date To</label>
+                        <input type="date" id="pb-date-to" onchange="applyPurchaseBillsFilters()">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="pb-total-min">Min Amount (₹)</label>
+                        <input type="number" id="pb-total-min" placeholder="0" onchange="applyPurchaseBillsFilters()">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="pb-total-max">Max Amount (₹)</label>
+                        <input type="number" id="pb-total-max" placeholder="Any" onchange="applyPurchaseBillsFilters()">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="pb-status-filter">Status</label>
+                        <div class="searchable-dropdown" id="pb-status-dropdown">
+                            <div class="searchable-dropdown-input" tabindex="0">
+                                <span class="dropdown-text">All Statuses</span>
+                                <span class="dropdown-arrow">▼</span>
+                            </div>
+                            <div class="searchable-dropdown-menu">
+                                <div class="searchable-dropdown-search">
+                                    <input type="text" placeholder="Search statuses..." autocomplete="off">
+                                </div>
+                                <div class="searchable-dropdown-options">
+                                    <div class="searchable-dropdown-empty">Loading statuses...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="filter-actions-row">
+                    <button class="btn-primary" onclick="applyPurchaseBillsFilters()">Apply Filters</button>
+                    <button class="btn-secondary" onclick="clearPurchaseBillsFilters()">Clear All</button>
+                    <div class="filter-summary">
+                        Showing: <strong id="pb-showing-count">0</strong> of <strong id="pb-db-total-count">0</strong> records
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <div id="pb-loading" class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Loading purchase bills...</p>
+                </div>
+                <div id="pb-table-container" style="display: none;">
+                    <table class="database-table">
+                        <thead>
+                            <tr>
+                                <th onclick="sortPurchaseBills('bill_date')">Date ↕</th>
+                                <th onclick="sortPurchaseBills('bill_number')">Bill Number ↕</th>
+                                <th onclick="sortPurchaseBills('vendor_name')">Vendor Name ↕</th>
+                                <th onclick="sortPurchaseBills('items_description')">Items Description ↕</th>
+                                <th onclick="sortPurchaseBills('total_amount')">Total (₹) ↕</th>
+                                <th onclick="sortPurchaseBills('status')">Status ↕</th>
+                                <th>View</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pb-table-body">
+                        </tbody>
+                    </table>
+                </div>
+                <div id="pb-no-data" class="no-data-state" style="display: none;">
+                    <p>📭 No purchase bills found matching your filters</p>
+                    <button class="btn-secondary" onclick="clearPurchaseBillsFilters()">Clear Filters</button>
+                </div>
+            </div>
+
+            <div class="pagination" id="pb-pagination" style="display: none;">
+                <button id="pb-prev-btn" onclick="loadPurchaseBillsPage(currentPurchaseBillsPage - 1)" disabled>← Previous</button>
+                <span id="pb-page-info">Page 1 of 1</span>
+                <button id="pb-next-btn" onclick="loadPurchaseBillsPage(currentPurchaseBillsPage + 1)" disabled>Next →</button>
             </div>
         </div>
     </div>
@@ -2999,6 +3679,9 @@
                     // Initialize quotation autocomplete and number
                     initializeQuotationAutocomplete();
                     initializeQuotationNumber();
+                } else if (pageId === 'databaseSelection') {
+                    // Update Bills counts when database selection page loads
+                    updateBillsCounts();
                 }
             }
         }
@@ -5982,6 +6665,757 @@
 
         // ==========================================
         // END PURCHASE ORDERS FUNCTIONALITY
+        // ==========================================
+
+        // ==========================================
+        // BILLS SYSTEM FUNCTIONALITY
+        // ==========================================
+
+        // Bills Configuration
+        const BILLS_CONFIG = {
+            endpoints: {
+                labourUpload: 'https://sngsng.app.n8n.cloud/webhook/upload-labour-bill',
+                labourGet: 'https://sngsng.app.n8n.cloud/webhook/get-labour-bills',
+                purchaseUpload: 'https://sngsng.app.n8n.cloud/webhook/upload-purchase-bill',
+                purchaseGet: 'https://sngsng.app.n8n.cloud/webhook/get-purchase-bills'
+            },
+            labourFile: null,
+            purchaseFile: null
+        };
+
+        // Labour Bills State
+        let currentLabourBillsPage = 1;
+        let labourBillsFilters = {};
+        let labourBillsData = null;
+
+        // Purchase Bills State
+        let currentPurchaseBillsPage = 1;
+        let purchaseBillsFilters = {};
+        let purchaseBillsData = null;
+
+        // ============================================
+        // LABOUR BILLS UPLOAD FUNCTIONS
+        // ============================================
+
+        /**
+         * Handle Labour Bill File Selection
+         */
+        function handleLabourBillFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
+            if (!validTypes.includes(file.type)) {
+                alert('Invalid file type. Please upload JPG, PNG, or PDF only.');
+                return;
+            }
+
+            const maxSize = 10 * 1024 * 1024;
+            if (file.size > maxSize) {
+                alert('File too large. Maximum size is 10MB.');
+                return;
+            }
+
+            BILLS_CONFIG.labourFile = file;
+            displayLabourBillPreview(file);
+            document.getElementById('labourUploadButton').style.display = 'block';
+            document.getElementById('labourUploadResult').style.display = 'none';
+        }
+
+        /**
+         * Display Labour Bill Preview
+         */
+        function displayLabourBillPreview(file) {
+            const previewDiv = document.getElementById('labourFilePreview');
+            const previewContent = document.getElementById('labourPreviewContent');
+            const fileInfo = document.getElementById('labourFileInfo');
+
+            previewDiv.style.display = 'block';
+
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewContent.innerHTML = `<img src="${e.target.result}" alt="Bill preview">`;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewContent.innerHTML = `<div style="text-align: center; padding: 40px; font-size: 4em;">📄</div>`;
+            }
+
+            const formatFileSize = (bytes) => {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+            };
+
+            fileInfo.innerHTML = `
+                <p><strong>Filename:</strong> ${file.name}</p>
+                <p><strong>Size:</strong> ${formatFileSize(file.size)}</p>
+                <p><strong>Type:</strong> ${file.type}</p>
+            `;
+        }
+
+        /**
+         * Clear Labour Bill File
+         */
+        function clearLabourBillFile() {
+            BILLS_CONFIG.labourFile = null;
+            document.getElementById('labourCameraInput').value = '';
+            document.getElementById('labourFileInput').value = '';
+            document.getElementById('labourFilePreview').style.display = 'none';
+            document.getElementById('labourUploadButton').style.display = 'none';
+            document.getElementById('labourUploadProgress').style.display = 'none';
+            document.getElementById('labourUploadResult').style.display = 'none';
+        }
+
+        /**
+         * Upload Labour Bill to n8n
+         */
+        async function uploadLabourBill() {
+            if (!BILLS_CONFIG.labourFile) {
+                alert('No file selected');
+                return;
+            }
+
+            const uploadBtn = document.getElementById('uploadLabourBillBtn');
+            const progressDiv = document.getElementById('labourUploadProgress');
+            const resultDiv = document.getElementById('labourUploadResult');
+            const progressFill = document.getElementById('labourProgressFill');
+            const progressText = document.getElementById('labourProgressText');
+
+            uploadBtn.disabled = true;
+            uploadBtn.querySelector('.btn-text').style.display = 'none';
+            uploadBtn.querySelector('.btn-spinner').style.display = 'inline';
+
+            progressDiv.style.display = 'block';
+            resultDiv.style.display = 'none';
+
+            try {
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += 10;
+                    if (progress <= 90) {
+                        progressFill.style.width = progress + '%';
+                        progressText.textContent = `Uploading... ${progress}%`;
+                    }
+                }, 300);
+
+                const formData = new FormData();
+                formData.append('data', BILLS_CONFIG.labourFile);
+                formData.append('filename', BILLS_CONFIG.labourFile.name);
+                formData.append('mimeType', BILLS_CONFIG.labourFile.type);
+
+                console.log('Uploading Labour Bill to:', BILLS_CONFIG.endpoints.labourUpload);
+
+                const response = await fetch(BILLS_CONFIG.endpoints.labourUpload, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+                progressText.textContent = 'Processing...';
+
+                const data = await response.json();
+                console.log('Response:', data);
+
+                progressDiv.style.display = 'none';
+
+                if (response.ok && data.success) {
+                    showLabourUploadSuccess(data.data);
+                } else {
+                    throw new Error(data.message || 'Upload failed');
+                }
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                progressDiv.style.display = 'none';
+                showLabourUploadError(error.message);
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.querySelector('.btn-text').style.display = 'inline';
+                uploadBtn.querySelector('.btn-spinner').style.display = 'none';
+            }
+        }
+
+        /**
+         * Show Labour Bill Upload Success
+         */
+        function showLabourUploadSuccess(data) {
+            const resultDiv = document.getElementById('labourUploadResult');
+
+            resultDiv.className = 'upload-result success';
+            resultDiv.style.display = 'block';
+
+            resultDiv.innerHTML = `
+                <h3>✅ Labour Bill Processed Successfully!</h3>
+                <div class="result-details">
+                    <p><strong>Bill Number:</strong> <span>${data.bill_number || 'N/A'}</span></p>
+                    <p><strong>Contractor:</strong> <span>${data.worker_contractor_name || 'N/A'}</span></p>
+                    <p><strong>Amount:</strong> <span>₹${parseFloat(data.total_amount || 0).toLocaleString('en-IN')}</span></p>
+                    <p><strong>Status:</strong> <span style="color: var(--success);">${data.status || 'Auto-Processed'}</span></p>
+                    <p><strong>Confidence:</strong> <span>${((data.confidence_score || 0) * 100).toFixed(0)}%</span></p>
+                </div>
+                <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="clearLabourBillFile()" class="btn-secondary">Upload Another</button>
+                    <button onclick="navigateTo('labourBillsDatabase');" class="btn-primary">View Database</button>
+                </div>
+            `;
+        }
+
+        /**
+         * Show Labour Bill Upload Error
+         */
+        function showLabourUploadError(message) {
+            const resultDiv = document.getElementById('labourUploadResult');
+
+            resultDiv.className = 'upload-result error';
+            resultDiv.style.display = 'block';
+
+            resultDiv.innerHTML = `
+                <h3>❌ Upload Failed</h3>
+                <p style="color: var(--error); margin: 15px 0;">${message}</p>
+                <div style="margin-top: 20px;">
+                    <button onclick="clearLabourBillFile()" class="btn-primary">Try Again</button>
+                </div>
+            `;
+        }
+
+        // ============================================
+        // PURCHASE BILLS UPLOAD FUNCTIONS
+        // ============================================
+
+        /**
+         * Handle Purchase Bill File Selection
+         */
+        function handlePurchaseBillFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
+            if (!validTypes.includes(file.type)) {
+                alert('Invalid file type. Please upload JPG, PNG, or PDF only.');
+                return;
+            }
+
+            const maxSize = 10 * 1024 * 1024;
+            if (file.size > maxSize) {
+                alert('File too large. Maximum size is 10MB.');
+                return;
+            }
+
+            BILLS_CONFIG.purchaseFile = file;
+            displayPurchaseBillPreview(file);
+            document.getElementById('purchaseUploadButton').style.display = 'block';
+            document.getElementById('purchaseUploadResult').style.display = 'none';
+        }
+
+        /**
+         * Display Purchase Bill Preview
+         */
+        function displayPurchaseBillPreview(file) {
+            const previewDiv = document.getElementById('purchaseFilePreview');
+            const previewContent = document.getElementById('purchasePreviewContent');
+            const fileInfo = document.getElementById('purchaseFileInfo');
+
+            previewDiv.style.display = 'block';
+
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewContent.innerHTML = `<img src="${e.target.result}" alt="Bill preview">`;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewContent.innerHTML = `<div style="text-align: center; padding: 40px; font-size: 4em;">📄</div>`;
+            }
+
+            const formatFileSize = (bytes) => {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+            };
+
+            fileInfo.innerHTML = `
+                <p><strong>Filename:</strong> ${file.name}</p>
+                <p><strong>Size:</strong> ${formatFileSize(file.size)}</p>
+                <p><strong>Type:</strong> ${file.type}</p>
+            `;
+        }
+
+        /**
+         * Clear Purchase Bill File
+         */
+        function clearPurchaseBillFile() {
+            BILLS_CONFIG.purchaseFile = null;
+            document.getElementById('purchaseCameraInput').value = '';
+            document.getElementById('purchaseFileInput').value = '';
+            document.getElementById('purchaseFilePreview').style.display = 'none';
+            document.getElementById('purchaseUploadButton').style.display = 'none';
+            document.getElementById('purchaseUploadProgress').style.display = 'none';
+            document.getElementById('purchaseUploadResult').style.display = 'none';
+        }
+
+        /**
+         * Upload Purchase Bill to n8n
+         */
+        async function uploadPurchaseBill() {
+            if (!BILLS_CONFIG.purchaseFile) {
+                alert('No file selected');
+                return;
+            }
+
+            const uploadBtn = document.getElementById('uploadPurchaseBillBtn');
+            const progressDiv = document.getElementById('purchaseUploadProgress');
+            const resultDiv = document.getElementById('purchaseUploadResult');
+            const progressFill = document.getElementById('purchaseProgressFill');
+            const progressText = document.getElementById('purchaseProgressText');
+
+            uploadBtn.disabled = true;
+            uploadBtn.querySelector('.btn-text').style.display = 'none';
+            uploadBtn.querySelector('.btn-spinner').style.display = 'inline';
+
+            progressDiv.style.display = 'block';
+            resultDiv.style.display = 'none';
+
+            try {
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += 10;
+                    if (progress <= 90) {
+                        progressFill.style.width = progress + '%';
+                        progressText.textContent = `Uploading... ${progress}%`;
+                    }
+                }, 300);
+
+                const formData = new FormData();
+                formData.append('data', BILLS_CONFIG.purchaseFile);
+                formData.append('filename', BILLS_CONFIG.purchaseFile.name);
+                formData.append('mimeType', BILLS_CONFIG.purchaseFile.type);
+
+                console.log('Uploading Purchase Bill to:', BILLS_CONFIG.endpoints.purchaseUpload);
+
+                const response = await fetch(BILLS_CONFIG.endpoints.purchaseUpload, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+                progressText.textContent = 'Processing...';
+
+                const data = await response.json();
+                console.log('Response:', data);
+
+                progressDiv.style.display = 'none';
+
+                if (response.ok && data.success) {
+                    showPurchaseUploadSuccess(data.data);
+                } else {
+                    throw new Error(data.message || 'Upload failed');
+                }
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                progressDiv.style.display = 'none';
+                showPurchaseUploadError(error.message);
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.querySelector('.btn-text').style.display = 'inline';
+                uploadBtn.querySelector('.btn-spinner').style.display = 'none';
+            }
+        }
+
+        /**
+         * Show Purchase Bill Upload Success
+         */
+        function showPurchaseUploadSuccess(data) {
+            const resultDiv = document.getElementById('purchaseUploadResult');
+
+            resultDiv.className = 'upload-result success';
+            resultDiv.style.display = 'block';
+
+            resultDiv.innerHTML = `
+                <h3>✅ Purchase Bill Processed Successfully!</h3>
+                <div class="result-details">
+                    <p><strong>Bill Number:</strong> <span>${data.bill_number || 'N/A'}</span></p>
+                    <p><strong>Vendor:</strong> <span>${data.vendor_name || 'N/A'}</span></p>
+                    <p><strong>Amount:</strong> <span>₹${parseFloat(data.total_amount || 0).toLocaleString('en-IN')}</span></p>
+                    <p><strong>Status:</strong> <span style="color: var(--success);">${data.status || 'Auto-Processed'}</span></p>
+                    <p><strong>Confidence:</strong> <span>${((data.confidence_score || 0) * 100).toFixed(0)}%</span></p>
+                </div>
+                <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="clearPurchaseBillFile()" class="btn-secondary">Upload Another</button>
+                    <button onclick="navigateTo('purchaseBillsDatabase');" class="btn-primary">View Database</button>
+                </div>
+            `;
+        }
+
+        /**
+         * Show Purchase Bill Upload Error
+         */
+        function showPurchaseUploadError(message) {
+            const resultDiv = document.getElementById('purchaseUploadResult');
+
+            resultDiv.className = 'upload-result error';
+            resultDiv.style.display = 'block';
+
+            resultDiv.innerHTML = `
+                <h3>❌ Upload Failed</h3>
+                <p style="color: var(--error); margin: 15px 0;">${message}</p>
+                <div style="margin-top: 20px;">
+                    <button onclick="clearPurchaseBillFile()" class="btn-primary">Try Again</button>
+                </div>
+            `;
+        }
+
+        /**
+         * Load Labour Bills Database Page
+         */
+        async function loadLabourBillsDatabase() {
+            navigateTo('labourBillsDatabase');
+            await fetchLabourBillsData({}, 1, true);
+        }
+
+        /**
+         * Fetch Labour Bills Data
+         */
+        async function fetchLabourBillsData(filterCriteria = {}, page = 1, forceRefresh = false) {
+            const loading = document.getElementById('lb-loading');
+            const tableContainer = document.getElementById('lb-table-container');
+            const noData = document.getElementById('lb-no-data');
+
+            loading.style.display = 'flex';
+            tableContainer.style.display = 'none';
+            noData.style.display = 'none';
+
+            try {
+                const requestBody = {
+                    filters: filterCriteria,
+                    page: page,
+                    limit: 50
+                };
+
+                const response = await fetch(BILLS_CONFIG.endpoints.labourGet, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    labourBillsData = data;
+                    currentLabourBillsPage = page;
+                    renderLabourBillsTable(data);
+                    updateLabourBillsStats(data);
+
+                    // Update counts
+                    document.getElementById('lb-showing-count').textContent = data.data?.length || 0;
+                    document.getElementById('lb-db-total-count').textContent = data.total || 0;
+                } else {
+                    throw new Error(data.message || 'Failed to load labour bills');
+                }
+
+            } catch (error) {
+                console.error('Error loading labour bills:', error);
+                loading.style.display = 'none';
+                noData.style.display = 'flex';
+            }
+        }
+
+        /**
+         * Render Labour Bills Table
+         */
+        function renderLabourBillsTable(data) {
+            const loading = document.getElementById('lb-loading');
+            const tableContainer = document.getElementById('lb-table-container');
+            const noData = document.getElementById('lb-no-data');
+            const tbody = document.getElementById('lb-table-body');
+
+            loading.style.display = 'none';
+
+            if (!data.data || data.data.length === 0) {
+                tableContainer.style.display = 'none';
+                noData.style.display = 'flex';
+                return;
+            }
+
+            let html = '';
+            data.data.forEach(bill => {
+                html += `
+                    <tr>
+                        <td>${bill['Bill Date'] || bill.bill_date || 'N/A'}</td>
+                        <td><strong>${bill['Bill Number'] || bill.bill_number || 'N/A'}</strong></td>
+                        <td>${bill['Worker/Contractor Name'] || bill.worker_contractor_name || 'N/A'}</td>
+                        <td>${bill['Work Description'] || bill.work_description || 'N/A'}</td>
+                        <td>₹${parseFloat(bill['Total Amount'] || bill.total_amount || 0).toLocaleString('en-IN')}</td>
+                        <td><span class="status-badge ${(bill.Status || bill.status || '').includes('Auto') ? 'status-success' : 'status-pending'}">${bill.Status || bill.status || 'N/A'}</span></td>
+                        <td><button onclick="window.open('${bill['Google Drive Link'] || bill.google_drive_link || '#'}', '_blank')" class="btn-primary" style="padding: 5px 15px;">👁️ View</button></td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+            tableContainer.style.display = 'block';
+            noData.style.display = 'none';
+        }
+
+        /**
+         * Update Labour Bills Stats
+         */
+        function updateLabourBillsStats(data) {
+            const countEl = document.getElementById('labourBillsCount');
+            if (countEl) countEl.textContent = data.total || 0;
+        }
+
+        /**
+         * Refresh Labour Bills Data
+         */
+        async function refreshLabourBillsData() {
+            await fetchLabourBillsData(labourBillsFilters, currentLabourBillsPage, true);
+        }
+
+        /**
+         * Apply Labour Bills Filters
+         */
+        function applyLabourBillsFilters() {
+            const filters = {};
+
+            const dateFrom = document.getElementById('lb-date-from').value;
+            const dateTo = document.getElementById('lb-date-to').value;
+            const minAmount = document.getElementById('lb-total-min').value;
+            const maxAmount = document.getElementById('lb-total-max').value;
+
+            if (dateFrom) filters.date_from = dateFrom;
+            if (dateTo) filters.date_to = dateTo;
+            if (minAmount) filters.min_amount = parseFloat(minAmount);
+            if (maxAmount) filters.max_amount = parseFloat(maxAmount);
+
+            labourBillsFilters = filters;
+            fetchLabourBillsData(filters, 1);
+        }
+
+        /**
+         * Clear Labour Bills Filters
+         */
+        function clearLabourBillsFilters() {
+            document.getElementById('lb-date-from').value = '';
+            document.getElementById('lb-date-to').value = '';
+            document.getElementById('lb-total-min').value = '';
+            document.getElementById('lb-total-max').value = '';
+
+            labourBillsFilters = {};
+            fetchLabourBillsData({}, 1);
+        }
+
+        /**
+         * Sort Labour Bills
+         */
+        function sortLabourBills(field) {
+            console.log('Sorting by:', field);
+        }
+
+        /**
+         * Load Labour Bills Page
+         */
+        function loadLabourBillsPage(page) {
+            fetchLabourBillsData(labourBillsFilters, page);
+        }
+
+        /**
+         * Load Purchase Bills Database Page
+         */
+        async function loadPurchaseBillsDatabase() {
+            navigateTo('purchaseBillsDatabase');
+            await fetchPurchaseBillsData({}, 1, true);
+        }
+
+        /**
+         * Fetch Purchase Bills Data
+         */
+        async function fetchPurchaseBillsData(filterCriteria = {}, page = 1, forceRefresh = false) {
+            const loading = document.getElementById('pb-loading');
+            const tableContainer = document.getElementById('pb-table-container');
+            const noData = document.getElementById('pb-no-data');
+
+            loading.style.display = 'flex';
+            tableContainer.style.display = 'none';
+            noData.style.display = 'none';
+
+            try {
+                const requestBody = {
+                    filters: filterCriteria,
+                    page: page,
+                    limit: 50
+                };
+
+                const response = await fetch(BILLS_CONFIG.endpoints.purchaseGet, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    purchaseBillsData = data;
+                    currentPurchaseBillsPage = page;
+                    renderPurchaseBillsTable(data);
+                    updatePurchaseBillsStats(data);
+
+                    // Update counts
+                    document.getElementById('pb-showing-count').textContent = data.data?.length || 0;
+                    document.getElementById('pb-db-total-count').textContent = data.total || 0;
+                } else {
+                    throw new Error(data.message || 'Failed to load purchase bills');
+                }
+
+            } catch (error) {
+                console.error('Error loading purchase bills:', error);
+                loading.style.display = 'none';
+                noData.style.display = 'flex';
+            }
+        }
+
+        /**
+         * Render Purchase Bills Table
+         */
+        function renderPurchaseBillsTable(data) {
+            const loading = document.getElementById('pb-loading');
+            const tableContainer = document.getElementById('pb-table-container');
+            const noData = document.getElementById('pb-no-data');
+            const tbody = document.getElementById('pb-table-body');
+
+            loading.style.display = 'none';
+
+            if (!data.data || data.data.length === 0) {
+                tableContainer.style.display = 'none';
+                noData.style.display = 'flex';
+                return;
+            }
+
+            let html = '';
+            data.data.forEach(bill => {
+                html += `
+                    <tr>
+                        <td>${bill['Bill Date'] || bill.bill_date || 'N/A'}</td>
+                        <td><strong>${bill['Bill Number'] || bill.bill_number || 'N/A'}</strong></td>
+                        <td>${bill['Vendor Name'] || bill.vendor_name || 'N/A'}</td>
+                        <td>${bill['Items Description'] || bill.items_description || 'N/A'}</td>
+                        <td>₹${parseFloat(bill['Total Amount'] || bill.total_amount || 0).toLocaleString('en-IN')}</td>
+                        <td><span class="status-badge ${(bill.Status || bill.status || '').includes('Auto') ? 'status-success' : 'status-pending'}">${bill.Status || bill.status || 'N/A'}</span></td>
+                        <td><button onclick="window.open('${bill['Google Drive Link'] || bill.google_drive_link || '#'}', '_blank')" class="btn-primary" style="padding: 5px 15px;">👁️ View</button></td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+            tableContainer.style.display = 'block';
+            noData.style.display = 'none';
+        }
+
+        /**
+         * Update Purchase Bills Stats
+         */
+        function updatePurchaseBillsStats(data) {
+            const countEl = document.getElementById('purchaseBillsCount');
+            if (countEl) countEl.textContent = data.total || 0;
+        }
+
+        /**
+         * Refresh Purchase Bills Data
+         */
+        async function refreshPurchaseBillsData() {
+            await fetchPurchaseBillsData(purchaseBillsFilters, currentPurchaseBillsPage, true);
+        }
+
+        /**
+         * Apply Purchase Bills Filters
+         */
+        function applyPurchaseBillsFilters() {
+            const filters = {};
+
+            const dateFrom = document.getElementById('pb-date-from').value;
+            const dateTo = document.getElementById('pb-date-to').value;
+            const minAmount = document.getElementById('pb-total-min').value;
+            const maxAmount = document.getElementById('pb-total-max').value;
+
+            if (dateFrom) filters.date_from = dateFrom;
+            if (dateTo) filters.date_to = dateTo;
+            if (minAmount) filters.min_amount = parseFloat(minAmount);
+            if (maxAmount) filters.max_amount = parseFloat(maxAmount);
+
+            purchaseBillsFilters = filters;
+            fetchPurchaseBillsData(filters, 1);
+        }
+
+        /**
+         * Clear Purchase Bills Filters
+         */
+        function clearPurchaseBillsFilters() {
+            document.getElementById('pb-date-from').value = '';
+            document.getElementById('pb-date-to').value = '';
+            document.getElementById('pb-total-min').value = '';
+            document.getElementById('pb-total-max').value = '';
+
+            purchaseBillsFilters = {};
+            fetchPurchaseBillsData({}, 1);
+        }
+
+        /**
+         * Sort Purchase Bills
+         */
+        function sortPurchaseBills(field) {
+            console.log('Sorting by:', field);
+        }
+
+        /**
+         * Load Purchase Bills Page
+         */
+        function loadPurchaseBillsPage(page) {
+            fetchPurchaseBillsData(purchaseBillsFilters, page);
+        }
+
+        /**
+         * Update Bills Counts on Database Selection Page
+         */
+        async function updateBillsCounts() {
+            try {
+                const labourResponse = await fetch(BILLS_CONFIG.endpoints.labourGet, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filters: {}, page: 1, limit: 1 })
+                });
+                const labourData = await labourResponse.json();
+                if (labourData.success) {
+                    const countEl = document.getElementById('labourBillsCount');
+                    if (countEl) countEl.textContent = labourData.total || 0;
+                }
+
+                const purchaseResponse = await fetch(BILLS_CONFIG.endpoints.purchaseGet, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filters: {}, page: 1, limit: 1 })
+                });
+                const purchaseData = await purchaseResponse.json();
+                if (purchaseData.success) {
+                    const countEl = document.getElementById('purchaseBillsCount');
+                    if (countEl) countEl.textContent = purchaseData.total || 0;
+                }
+            } catch (error) {
+                console.error('Error updating bills counts:', error);
+            }
+        }
+
+        console.log('✅ Bills system JavaScript loaded');
+
+        // ==========================================
+        // END BILLS SYSTEM FUNCTIONALITY
         // ==========================================
     </script>
 </body>
