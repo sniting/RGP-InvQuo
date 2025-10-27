@@ -2965,9 +2965,9 @@
                                 <th onclick="sortPurchaseOrders('created_at')">Date ↕</th>
                                 <th onclick="sortPurchaseOrders('po_number')">PO Number ↕</th>
                                 <th onclick="sortPurchaseOrders('customer_name')">Customer ↕</th>
+                                <th onclick="sortPurchaseOrders('items_description')">Item Description ↕</th>
                                 <th onclick="sortPurchaseOrders('total_amount')">Total (₹) ↕</th>
                                 <th onclick="sortPurchaseOrders('status')">Status ↕</th>
-                                <th onclick="sortPurchaseOrders('confidence_score')">Confidence ↕</th>
                                 <th>View</th>
                             </tr>
                         </thead>
@@ -6585,18 +6585,17 @@
                 // Status badge
                 const statusClass = po.status === 'Auto-Processed' ? 'status-completed' : 'status-pending';
 
-                // Confidence score
-                const confidence = parseFloat(po.confidence_score) || 0;
-                const confidencePercent = (confidence * 100).toFixed(0);
-                const confidenceClass = confidence >= 0.9 ? 'confidence-high' : confidence >= 0.7 ? 'confidence-medium' : 'confidence-low';
+                // Items description - truncate if too long
+                const itemsDesc = po.items_description || 'N/A';
+                const displayItemsDesc = itemsDesc.length > 50 ? itemsDesc.substring(0, 50) + '...' : itemsDesc;
 
                 row.innerHTML = `
                     <td>${dateCreated}</td>
                     <td><strong>${po.po_number || 'N/A'}</strong></td>
                     <td>${po.customer_name || 'N/A'}</td>
+                    <td title="${itemsDesc}">${displayItemsDesc}</td>
                     <td>₹ ${formattedAmount}</td>
                     <td><span class="status-badge ${statusClass}">${po.status || 'Unknown'}</span></td>
-                    <td><span class="confidence-badge ${confidenceClass}">${confidencePercent}%</span></td>
                     <td>
                         <button class="btn-view" onclick="viewPurchaseOrder('${po.google_drive_link}')" title="View PO in Google Drive">
                             👁️ View
