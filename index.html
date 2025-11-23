@@ -1726,7 +1726,7 @@
         .html-viewer-header {
             padding: 20px 30px;
             border-bottom: 2px solid var(--primary);
-            display: none !important; /* Force hide - not needed for DC viewer */
+            display: flex; /* Visible for invoices - Edit functionality */
             justify-content: space-between;
             align-items: center;
             background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1));
@@ -4606,8 +4606,24 @@
     <div id="htmlViewerModal" class="html-viewer-modal" style="display: none;">
         <div class="html-viewer-overlay" onclick="closeHTMLViewer()"></div>
         <div class="html-viewer-container">
-            <!-- Header removed - DC documents print with their own headers -->
-            <!-- VERIFICATION: This modal has NO header div - it was deleted completely -->
+            <!-- Document Viewer Header with Actions -->
+            <div class="html-viewer-header no-print">
+                <h3 id="htmlViewerTitle">Document View</h3>
+                <div class="html-viewer-actions">
+                    <button onclick="printViewedDocument()" class="btn-primary" title="Print or Save as PDF">
+                        🖨️ Print / Save as PDF
+                    </button>
+                    <button onclick="editViewedInvoice()" id="btnEditInvoice" class="btn-primary" title="Edit this invoice" style="background: linear-gradient(135deg, #f59e0b, #d97706); display: none;">
+                        ✏️ Edit
+                    </button>
+                    <button onclick="downloadViewedDocument()" class="btn-secondary" title="Download HTML file">
+                        💾 Download
+                    </button>
+                    <button onclick="closeHTMLViewer()" class="btn-secondary" title="Close viewer">
+                        ✖️ Close
+                    </button>
+                </div>
+            </div>
             <div class="html-viewer-content">
                 <iframe id="htmlViewerFrame" title="Document Viewer"></iframe>
             </div>
@@ -7198,7 +7214,8 @@
                 viewBtn.addEventListener('click', function() {
                     // Use stored HTML if available, otherwise fallback to old method
                     if (invoice.generated_html && invoice.generated_html.trim()) {
-                        openHTMLViewer(invoice.generated_html, `Invoice: ${invoice.invoice_no}`);
+                        // Pass invoice data for the Edit functionality
+                        openHTMLViewer(invoice.generated_html, `Invoice: ${invoice.invoice_no}`, invoice);
                     } else if (invoice.view_invoice) {
                         window.open(invoice.view_invoice, '_blank');
                     } else {
@@ -7524,6 +7541,8 @@
          * HTML Viewer Modal Functions - Document Recovery System
          */
         let currentViewedHTML = '';
+        let currentViewedInvoiceData = null; // Store current invoice data for editing
+        let parsedItemsData = []; // Store parsed items data temporarily
 
         /**
          * Inject Edit Functionality into Invoice/Quotation HTML
@@ -7913,15 +7932,38 @@
             return html;
         }
 
-        function openHTMLViewer(html, title) {
+        function openHTMLViewer(html, title, invoiceData = null) {
+            console.log('🔍 openHTMLViewer called with:', {
+                hasHTML: !!html,
+                title: title,
+                hasInvoiceData: !!invoiceData,
+                invoiceDataKeys: invoiceData ? Object.keys(invoiceData).slice(0, 10) : null
+            });
+
             const modal = document.getElementById('htmlViewerModal');
             const titleEl = document.getElementById('htmlViewerTitle');
             const iframe = document.getElementById('htmlViewerFrame');
             const loading = document.getElementById('htmlViewerLoading');
+            const editBtn = document.getElementById('btnEditInvoice');
 
             if (!modal || !iframe) {
                 console.error('HTML Viewer elements not found');
                 return;
+            }
+
+            // Store invoice data for editing
+            currentViewedInvoiceData = invoiceData;
+            console.log('✅ Stored invoice data in currentViewedInvoiceData:', currentViewedInvoiceData ? 'SUCCESS' : 'FAILED (null)');
+
+            // Show/hide Edit button based on whether invoice data is provided
+            if (editBtn) {
+                if (invoiceData && title && title.toLowerCase().includes('invoice')) {
+                    editBtn.style.display = 'inline-block';
+                    console.log('✅ Edit button shown');
+                } else {
+                    editBtn.style.display = 'none';
+                    console.log('ℹ️ Edit button hidden (not an invoice or no data)');
+                }
             }
 
             // Set title
@@ -7937,8 +7979,7 @@
             // Inject RGP logo into HTML (replace placeholder with actual base64)
             let htmlWithLogo = html.replace(/\{\{RGP_LOGO_PLACEHOLDER\}\}/g, RGP_LOGO_BASE64);
 
-            // Inject Edit functionality into the HTML
-            htmlWithLogo = injectEditFunctionality(htmlWithLogo);
+            // Note: Edit functionality removed - now handled by Edit button in viewer header
 
             // Store current HTML for download (with logo)
             currentViewedHTML = htmlWithLogo;
@@ -7961,9 +8002,440 @@
             if (modal) modal.style.display = 'none';
             if (iframe) iframe.srcdoc = '';
             currentViewedHTML = '';
+            currentViewedInvoiceData = null; // Clear invoice data
 
             // Remove ESC key listener
             document.removeEventListener('keydown', handleHTMLViewerKeyPress);
+        }
+
+        /**
+         * Edit the currently viewed invoice
+         * This navigates to the invoice generation page with pre-filled data
+         */
+        function editViewedInvoice() {
+            console.log('🔍 editViewedInvoice called');
+            console.log('🔍 currentViewedInvoiceData:', currentViewedInvoiceData);
+
+            if (!currentViewedInvoiceData) {
+                console.error('❌ No invoice data available - currentViewedInvoiceData is null');
+                alert('No invoice data available for editing.\n\nPlease try:\n1. Close this invoice\n2. Click View again\n3. Then click Edit');
+                return;
+            }
+
+            console.log('✅ Invoice data found, proceeding to edit');
+
+            // CRITICAL: Save invoice data BEFORE closing viewer (which clears it)
+            const invoiceDataToEdit = currentViewedInvoiceData;
+            console.log('💾 Saved invoice data locally before closing viewer');
+
+            // Close the viewer
+            closeHTMLViewer();
+
+            // Navigate to invoice generation page
+            navigateTo('invoicePage');
+
+            // Wait for page to load, then fill the form with saved data
+            setTimeout(() => {
+                console.log('🔍 About to call fillInvoiceForm with saved data:', invoiceDataToEdit);
+                fillInvoiceForm(invoiceDataToEdit);
+            }, 300);
+        }
+
+        /**
+         * Fill the invoice generation form with data from database
+         * @param {Object} invoiceData - The invoice data from the database
+         */
+        function fillInvoiceForm(invoiceData) {
+            console.log('📝 Filling invoice form with data:', invoiceData);
+
+            // Defensive check
+            if (!invoiceData) {
+                console.error('❌ fillInvoiceForm called with null/undefined data!');
+                alert('Error: No invoice data to fill.\n\nPlease report this issue.');
+                return;
+            }
+
+            // Client Information
+            if (invoiceData.client_name || invoiceData['Client Name']) {
+                document.getElementById('client_name').value = invoiceData.client_name || invoiceData['Client Name'];
+            }
+            if (invoiceData.client_address || invoiceData['Client Address']) {
+                document.getElementById('client_address').value = invoiceData.client_address || invoiceData['Client Address'];
+            }
+            if (invoiceData.client_gst || invoiceData['Client GST']) {
+                document.getElementById('client_gst').value = invoiceData.client_gst || invoiceData['Client GST'];
+            }
+
+            // Invoice Details
+            if (invoiceData.invoice_no || invoiceData['Invoice No']) {
+                document.getElementById('invoice_no').value = invoiceData.invoice_no || invoiceData['Invoice No'];
+            }
+            if (invoiceData.invoice_date || invoiceData['Invoice Date']) {
+                // Convert DD/MM/YYYY to YYYY-MM-DD for input[type="date"]
+                const dateStr = invoiceData.invoice_date || invoiceData['Invoice Date'];
+                const dateFormatted = convertToDateInput(dateStr);
+                if (dateFormatted) {
+                    document.getElementById('date').value = dateFormatted;
+                }
+            }
+            if (invoiceData.dc_no || invoiceData['DC No']) {
+                document.getElementById('dc_no').value = invoiceData.dc_no || invoiceData['DC No'];
+            }
+            if (invoiceData.dc_date || invoiceData['DC Date']) {
+                const dateStr = invoiceData.dc_date || invoiceData['DC Date'];
+                const dateFormatted = convertToDateInput(dateStr);
+                if (dateFormatted) {
+                    document.getElementById('dc_date').value = dateFormatted;
+                }
+            }
+            if (invoiceData.po_number || invoiceData['PO Number']) {
+                document.getElementById('po_number').value = invoiceData.po_number || invoiceData['PO Number'];
+            }
+            if (invoiceData.po_date || invoiceData['PO Date']) {
+                const dateStr = invoiceData.po_date || invoiceData['PO Date'];
+                const dateFormatted = convertToDateInput(dateStr);
+                if (dateFormatted) {
+                    document.getElementById('po_date').value = dateFormatted;
+                }
+            }
+
+            // Additional Fields
+            if (invoiceData.transport_charge || invoiceData['Transport Charge']) {
+                document.getElementById('transport_charge').value = invoiceData.transport_charge || invoiceData['Transport Charge'];
+            }
+            if (invoiceData.hsn_code || invoiceData['HSN Code']) {
+                document.getElementById('hsn').value = invoiceData.hsn_code || invoiceData['HSN Code'];
+            }
+            if (invoiceData.tax_rate || invoiceData['Tax Rate']) {
+                const taxRate = (invoiceData.tax_rate || invoiceData['Tax Rate']) * 100; // Convert 0.18 to 18
+                document.getElementById('tax_rate').value = taxRate;
+            }
+
+            // Interstate checkbox
+            const isInterstate = (invoiceData.is_interstate || invoiceData['Interstate']) === 'Yes';
+            document.getElementById('inter_state').checked = isInterstate;
+
+            // Parse and fill items
+            parseAndFillItems(invoiceData);
+
+            // Update preview after filling
+            setTimeout(() => {
+                if (typeof updatePreview === 'function') {
+                    updatePreview();
+                }
+            }, 100);
+
+            // Show success message
+            const statusMsg = document.getElementById('statusMessage');
+            if (statusMsg) {
+                statusMsg.textContent = '✏️ Invoice data loaded for editing. Modify as needed and click "Generate Invoice" to save changes.';
+                statusMsg.style.display = 'block';
+                statusMsg.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
+                setTimeout(() => {
+                    statusMsg.style.display = 'none';
+                }, 5000);
+            }
+
+            console.log('✅ Invoice form filled successfully');
+        }
+
+        /**
+         * Convert date from DD/MM/YYYY to YYYY-MM-DD for HTML date input
+         * @param {string} dateStr - Date in DD/MM/YYYY format
+         * @returns {string} Date in YYYY-MM-DD format
+         */
+        function convertToDateInput(dateStr) {
+            if (!dateStr) return '';
+
+            // Handle DD/MM/YYYY format
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+                const day = parts[0].padStart(2, '0');
+                const month = parts[1].padStart(2, '0');
+                const year = parts[2];
+                return `${year}-${month}-${day}`;
+            }
+
+            // Already in correct format or invalid
+            return dateStr;
+        }
+
+        /**
+         * INTELLIGENT Parse items summary with multiple patterns and fallback
+         * @param {Object} invoiceData - The invoice data containing items summary
+         */
+        function parseAndFillItems(invoiceData) {
+            console.log('🔍 parseAndFillItems called');
+            console.log('🔍 Invoice data:', invoiceData);
+
+            const itemsSummary = invoiceData.items_summary || invoiceData['Items Summary'];
+            console.log('🔍 Items Summary:', itemsSummary);
+
+            if (!itemsSummary) {
+                console.warn('❌ No items summary found in invoice data');
+                return;
+            }
+
+            // Clear existing items first
+            if (documentManager && typeof documentManager.clearItems === 'function') {
+                console.log('✅ Clearing existing items...');
+                documentManager.clearItems('invoice');
+            } else {
+                // Fallback: clear manually
+                console.log('⚠️ documentManager.clearItems not available, clearing manually');
+                const container = document.getElementById('itemsContainer');
+                if (container) container.innerHTML = '';
+            }
+
+            // Clear parsed data storage
+            parsedItemsData = [];
+
+            // Parse items summary
+            // Format: "1. Item Name - Service Type - Details (Qty @ Rate) = Amount\nTransport: Amount"
+            const lines = itemsSummary.split('\n');
+            console.log('🔍 Lines to parse:', lines);
+
+            let successCount = 0;
+            let fallbackCount = 0;
+
+            for (let line of lines) {
+                line = line.trim();
+                console.log('🔍 Processing line:', line);
+                if (!line || line.startsWith('Transport:')) {
+                    console.log('⏭️ Skipping line (empty or transport)');
+                    continue;
+                }
+
+                let parsed = false;
+
+                // INTELLIGENT PARSING: Try multiple regex patterns
+                // Pattern 1: "1. Item Name - Service Type - Details (Qty @ Rate) = Amount"
+                let match = line.match(/^\d+\.\s*(.+?)\s*-\s*(.+?)\s*-\s*(.+?)\s*\((\d+)\s*@\s*([\d.]+)\)/);
+
+                if (match) {
+                    console.log('✅ Pattern 1 matched!', match);
+                    const [, itemName, serviceType, details, qty, rate] = match;
+                    console.log('📦 Extracted:', {itemName, serviceType, details, qty, rate});
+                    if (addItemToForm(itemName.trim(), serviceType.trim(), details.trim(), qty, rate)) {
+                        parsed = true;
+                        successCount++;
+                        console.log('✅ Item added successfully');
+                    } else {
+                        console.error('❌ addItemToForm returned false');
+                    }
+                } else {
+                    console.log('❌ Pattern 1 did not match');
+                }
+
+                // Pattern 2: "1. Item Name - Service - Details (Qty @ Rate)"
+                if (!parsed) {
+                    match = line.match(/^\d+\.\s*(.+?)\s*-\s*(.+?)\s*-\s*(.+?)\s*\((\d+)\s*@\s*([\d.]+)\s*\)/);
+                    if (match) {
+                        const [, itemName, serviceType, details, qty, rate] = match;
+                        if (addItemToForm(itemName.trim(), serviceType.trim(), details.trim(), qty, rate)) {
+                            parsed = true;
+                            successCount++;
+                        }
+                    }
+                }
+
+                // Pattern 3: Try without "= Amount" at the end
+                if (!parsed) {
+                    match = line.match(/^\d+\.\s*(.+?)\s*-\s*(.+?)\s*-\s*(.+)/);
+                    if (match) {
+                        const [, itemName, serviceType, details] = match;
+                        // Try to extract qty and rate from details
+                        const qtyRateMatch = details.match(/\((\d+)\s*@\s*([\d.]+)\)/);
+                        if (qtyRateMatch) {
+                            const [, qty, rate] = qtyRateMatch;
+                            const cleanDetails = details.replace(/\((\d+)\s*@\s*([\d.]+)\).*$/, '').trim();
+                            if (addItemToForm(itemName.trim(), serviceType.trim(), cleanDetails, qty, rate)) {
+                                parsed = true;
+                                successCount++;
+                            }
+                        }
+                    }
+                }
+
+                // FALLBACK: If all patterns fail, put entire line in description field
+                if (!parsed) {
+                    console.warn('⚠️ Could not parse item line, using fallback:', line);
+
+                    // Add item with line in description
+                    if (documentManager && typeof documentManager.addItem === 'function') {
+                        documentManager.addItem('invoice');
+
+                        const items = document.querySelectorAll('#itemsContainer .item-card');
+                        const lastIndex = items.length - 1;
+                        const itemPrefix = `items[${lastIndex}]`;
+
+                        // Put the entire line in the details/description field
+                        const detailsInput = document.querySelector(`textarea[name="${itemPrefix}[details]"]`);
+                        if (detailsInput) {
+                            detailsInput.value = `⚠️ Auto-filled (please review):\n${line}`;
+                            detailsInput.style.background = '#fff3cd'; // Yellow highlight
+                        }
+
+                        // Set default qty and rate
+                        const qtyInput = document.querySelector(`input[name="${itemPrefix}[quantity]"]`);
+                        const rateInput = document.querySelector(`input[name="${itemPrefix}[rate]"]`);
+                        if (qtyInput) qtyInput.value = '1';
+                        if (rateInput) rateInput.value = '0';
+
+                        fallbackCount++;
+                    }
+                }
+            }
+
+            // Log results
+            if (successCount > 0) {
+                console.log(`✅ Successfully parsed ${successCount} item(s)`);
+            }
+            if (fallbackCount > 0) {
+                console.warn(`⚠️ ${fallbackCount} item(s) used fallback - please review and fill manually`);
+
+                // Show user message about fallback
+                const statusMsg = document.getElementById('statusMessage');
+                if (statusMsg && fallbackCount > 0) {
+                    const currentText = statusMsg.textContent;
+                    statusMsg.textContent = currentText + `\n⚠️ Note: ${fallbackCount} item(s) could not be auto-parsed. Please review highlighted fields.`;
+                }
+            }
+
+            // CRITICAL FIX: Wait for ALL items to be added, then fill them
+            // This prevents race condition where items are cleared before setTimeout fires
+            console.log('⏳ Waiting for items to be fully rendered before filling fields...');
+            setTimeout(() => {
+                console.log('🔍 Now filling item fields...');
+                fillItemFieldsFromParsedData();
+            }, 200);
+        }
+
+        /**
+         * Helper: Add a parsed item to the form (NEW: Just adds item, doesn't fill fields)
+         * @returns {boolean} Success status
+         */
+        function addItemToForm(itemName, serviceType, details, qty, rate) {
+            console.log('🔍 addItemToForm called with:', {itemName, serviceType, details, qty, rate});
+
+            if (!documentManager || typeof documentManager.addItem !== 'function') {
+                console.error('❌ documentManager not available');
+                return false;
+            }
+
+            console.log('✅ documentManager exists, adding item...');
+            documentManager.addItem('invoice');
+
+            // Store the parsed data for later filling
+            parsedItemsData.push({
+                itemName,
+                serviceType,
+                details,
+                qty,
+                rate
+            });
+
+            console.log(`✅ Item added and data stored. Total items data: ${parsedItemsData.length}`);
+            return true;
+        }
+
+        /**
+         * Fill item fields from parsed data (called AFTER all items are rendered)
+         */
+        function fillItemFieldsFromParsedData() {
+            console.log('🔍 fillItemFieldsFromParsedData called');
+            console.log(`📦 Parsed items data (${parsedItemsData.length} items):`, parsedItemsData);
+
+            // CRITICAL FIX: The class is 'item-entry' NOT 'item-card'
+            const itemEntries = document.querySelectorAll('#itemsContainer .item-entry');
+            console.log(`📦 Item entries in DOM: ${itemEntries.length}`);
+
+            if (itemEntries.length === 0) {
+                console.error('❌ No item entries found in DOM!');
+                // FALLBACK: Create one item with full summary
+                console.log('🔄 Using fallback: creating single item with full description');
+                const itemsSummary = currentViewedInvoiceData?.items_summary || currentViewedInvoiceData?.['Items Summary'];
+                if (itemsSummary && documentManager) {
+                    documentManager.addItem('invoice');
+                    setTimeout(() => {
+                        const items = document.querySelectorAll('#itemsContainer .item-entry');
+                        if (items.length > 0) {
+                            const lastItem = items[items.length - 1];
+                            const detailsInput = lastItem.querySelector('textarea');
+                            if (detailsInput) {
+                                detailsInput.value = `⚠️ Auto-filled from database - please review:\n\n${itemsSummary}`;
+                                detailsInput.style.background = '#fff3cd';
+                                console.log('✅ Fallback: Full summary pasted into description');
+                            }
+                        }
+                    }, 100);
+                }
+                return;
+            }
+
+            // Fill each item entry with corresponding data using ID-based selectors
+            parsedItemsData.forEach((itemData, index) => {
+                if (index >= itemEntries.length) {
+                    console.warn(`⚠️ More parsed data (${parsedItemsData.length}) than item entries (${itemEntries.length})`);
+                    return;
+                }
+
+                const entry = itemEntries[index];
+                console.log(`📝 Filling item ${index + 1}/${parsedItemsData.length}`);
+
+                // Extract itemId from the entry's ID (e.g., "item-1" -> "1")
+                const itemId = entry.id.replace('item-', '');
+                console.log(`  Item ID: ${itemId}`);
+
+                // Use exact ID-based selectors (more reliable than placeholders)
+                const nameInput = document.getElementById(`item_name_${itemId}`);
+                const serviceInput = document.getElementById(`item_service_${itemId}`);
+                const detailsInput = document.getElementById(`item_details_${itemId}`);
+                const qtyInput = document.getElementById(`item_qty_${itemId}`);
+                const rateInput = document.getElementById(`item_rate_${itemId}`);
+
+                console.log('  Found inputs:', {
+                    name: !!nameInput,
+                    service: !!serviceInput,
+                    details: !!detailsInput,
+                    qty: !!qtyInput,
+                    rate: !!rateInput
+                });
+
+                // Fill the fields
+                if (nameInput) {
+                    nameInput.value = itemData.itemName;
+                    console.log(`    ✓ Name: "${itemData.itemName}"`);
+                }
+                if (serviceInput) {
+                    serviceInput.value = itemData.serviceType;
+                    console.log(`    ✓ Service: "${itemData.serviceType}"`);
+                }
+                if (detailsInput) {
+                    detailsInput.value = itemData.details;
+                    console.log(`    ✓ Details: "${itemData.details}"`);
+                }
+                if (qtyInput) {
+                    qtyInput.value = itemData.qty;
+                    console.log(`    ✓ Qty: ${itemData.qty}`);
+                }
+                if (rateInput) {
+                    rateInput.value = itemData.rate;
+                    console.log(`    ✓ Rate: ${itemData.rate}`);
+                }
+
+                console.log(`  ✅ Item ${index + 1} filled successfully`);
+            });
+
+            console.log('✅ All item fields filled!');
+
+            // Trigger calculations and preview update
+            setTimeout(() => {
+                if (typeof updatePreview === 'function') {
+                    updatePreview();
+                    console.log('✅ Preview updated');
+                }
+            }, 100);
         }
 
         function handleHTMLViewerKeyPress(e) {
@@ -11252,32 +11724,12 @@
         }
 
         function viewDCRecord(record) {
-            // Create a modal or new window to display the DC
-            const modal = document.createElement('div');
-            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;';
-            modal.className = 'modal dc-viewer-modal';
-
-            const content = document.createElement('div');
-            content.style.cssText = 'background: white; color: black; padding: 0; border-radius: 10px; max-width: 900px; max-height: 90vh; overflow-y: auto; width: 100%;';
-            content.className = 'dc-viewer-content';
-
-            content.innerHTML = `
-                ${record.generated_html || '<p>No HTML content available</p>'}
-            `;
-
-            modal.appendChild(content);
-            document.body.appendChild(modal);
-
-            // Close modal on ESC key or click outside
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) modal.remove();
-            });
-            document.addEventListener('keydown', function escHandler(e) {
-                if (e.key === 'Escape') {
-                    modal.remove();
-                    document.removeEventListener('keydown', escHandler);
-                }
-            });
+            // Use the standard HTML viewer (same as invoices) for consistent printing
+            if (record.generated_html && record.generated_html.trim()) {
+                openHTMLViewer(record.generated_html, `Delivery Challan: ${record.dc_no || record.dc_number || ''}`);
+            } else {
+                alert('No saved document found for this delivery challan.');
+            }
         }
 
         // Initialize DC page
