@@ -7279,7 +7279,7 @@
                 viewBtn.addEventListener('click', function() {
                     // Use stored HTML if available
                     if (quotation.generated_html && quotation.generated_html.trim()) {
-                        openHTMLViewer(quotation.generated_html, `Quotation: ${quotation.quotation_ref}`);
+                        openHTMLViewer(quotation.generated_html, `Quotation: ${quotation.quotation_ref}`, quotation, 'quotation');
                     } else {
                         alert('No saved document found for this quotation.\n\nThis quotation was generated before the HTML recovery system was implemented.');
                     }
@@ -7542,7 +7542,9 @@
          */
         let currentViewedHTML = '';
         let currentViewedInvoiceData = null; // Store current invoice data for editing
-        let parsedItemsData = []; // Store parsed items data temporarily
+        let currentViewedQuotationData = null; // Store current quotation data for editing
+        let parsedItemsData = []; // Store parsed invoice items data temporarily
+        let parsedQuotationItemsData = []; // Store parsed quotation items data temporarily
 
         /**
          * Inject Edit Functionality into Invoice/Quotation HTML
@@ -7932,12 +7934,13 @@
             return html;
         }
 
-        function openHTMLViewer(html, title, invoiceData = null) {
+        function openHTMLViewer(html, title, documentData = null, documentType = null) {
             console.log('🔍 openHTMLViewer called with:', {
                 hasHTML: !!html,
                 title: title,
-                hasInvoiceData: !!invoiceData,
-                invoiceDataKeys: invoiceData ? Object.keys(invoiceData).slice(0, 10) : null
+                hasDocumentData: !!documentData,
+                documentType: documentType,
+                documentDataKeys: documentData ? Object.keys(documentData).slice(0, 10) : null
             });
 
             const modal = document.getElementById('htmlViewerModal');
@@ -7951,18 +7954,28 @@
                 return;
             }
 
-            // Store invoice data for editing
-            currentViewedInvoiceData = invoiceData;
-            console.log('✅ Stored invoice data in currentViewedInvoiceData:', currentViewedInvoiceData ? 'SUCCESS' : 'FAILED (null)');
+            // Store data based on document type
+            if (documentType === 'quotation') {
+                currentViewedQuotationData = documentData;
+                currentViewedInvoiceData = null;
+                console.log('✅ Stored quotation data in currentViewedQuotationData');
+            } else {
+                currentViewedInvoiceData = documentData;
+                currentViewedQuotationData = null;
+                console.log('✅ Stored invoice data in currentViewedInvoiceData');
+            }
 
-            // Show/hide Edit button based on whether invoice data is provided
+            // Show/hide Edit button based on document type and data
             if (editBtn) {
-                if (invoiceData && title && title.toLowerCase().includes('invoice')) {
+                const isInvoice = title && title.toLowerCase().includes('invoice');
+                const isQuotation = title && title.toLowerCase().includes('quotation');
+
+                if (documentData && (isInvoice || isQuotation)) {
                     editBtn.style.display = 'inline-block';
-                    console.log('✅ Edit button shown');
+                    console.log(`✅ Edit button shown for ${documentType || 'invoice'}`);
                 } else {
                     editBtn.style.display = 'none';
-                    console.log('ℹ️ Edit button hidden (not an invoice or no data)');
+                    console.log('ℹ️ Edit button hidden (not editable document or no data)');
                 }
             }
 
@@ -8003,22 +8016,47 @@
             if (iframe) iframe.srcdoc = '';
             currentViewedHTML = '';
             currentViewedInvoiceData = null; // Clear invoice data
+            currentViewedQuotationData = null; // Clear quotation data
 
             // Remove ESC key listener
             document.removeEventListener('keydown', handleHTMLViewerKeyPress);
         }
 
         /**
-         * Edit the currently viewed invoice
-         * This navigates to the invoice generation page with pre-filled data
+         * Edit the currently viewed invoice or quotation
+         * This navigates to the generation page with pre-filled data
          */
         function editViewedInvoice() {
             console.log('🔍 editViewedInvoice called');
             console.log('🔍 currentViewedInvoiceData:', currentViewedInvoiceData);
+            console.log('🔍 currentViewedQuotationData:', currentViewedQuotationData);
 
+            // Check if it's a quotation
+            if (currentViewedQuotationData) {
+                console.log('✅ Quotation data found, proceeding to edit quotation');
+
+                // CRITICAL: Save quotation data BEFORE closing viewer (which clears it)
+                const quotationDataToEdit = currentViewedQuotationData;
+                console.log('💾 Saved quotation data locally before closing viewer');
+
+                // Close the viewer
+                closeHTMLViewer();
+
+                // Navigate to quotation generation page
+                navigateTo('quotationPage');
+
+                // Wait for page to load, then fill the form with saved data
+                setTimeout(() => {
+                    console.log('🔍 About to call fillQuotationForm with saved data:', quotationDataToEdit);
+                    fillQuotationForm(quotationDataToEdit);
+                }, 300);
+                return;
+            }
+
+            // Otherwise, it's an invoice
             if (!currentViewedInvoiceData) {
                 console.error('❌ No invoice data available - currentViewedInvoiceData is null');
-                alert('No invoice data available for editing.\n\nPlease try:\n1. Close this invoice\n2. Click View again\n3. Then click Edit');
+                alert('No document data available for editing.\n\nPlease try:\n1. Close this document\n2. Click View again\n3. Then click Edit');
                 return;
             }
 
@@ -8176,19 +8214,21 @@
                 return;
             }
 
-            // Clear existing items first
-            if (documentManager && typeof documentManager.clearItems === 'function') {
-                console.log('✅ Clearing existing items...');
-                documentManager.clearItems('invoice');
-            } else {
-                // Fallback: clear manually
-                console.log('⚠️ documentManager.clearItems not available, clearing manually');
-                const container = document.getElementById('itemsContainer');
-                if (container) container.innerHTML = '';
-            }
-
             // Clear parsed data storage
             parsedItemsData = [];
+
+            // CRITICAL: Clear existing items in DOM (remove default item on page load)
+            const invoiceContainer = document.getElementById('itemsContainer');
+            if (invoiceContainer) {
+                invoiceContainer.innerHTML = '';
+                console.log('🧹 Cleared existing invoice items from DOM');
+            }
+
+            // Reset invoice item count
+            if (documentManager) {
+                documentManager.invoiceItemCount = 0;
+                console.log('🔄 Reset invoice item count to 0');
+            }
 
             // Parse items summary
             // Format: "1. Item Name - Service Type - Details (Qty @ Rate) = Amount\nTransport: Amount"
@@ -8437,6 +8477,344 @@
                 }
             }, 100);
         }
+
+        /**
+         * ==================== QUOTATION EDIT FUNCTIONS ====================
+         */
+
+        /**
+         * Fill the quotation generation form with data from database
+         * @param {Object} quotationData - The quotation data from the database
+         */
+        function fillQuotationForm(quotationData) {
+            console.log('📝 Filling quotation form with data:', quotationData);
+
+            if (!quotationData) {
+                console.error('❌ fillQuotationForm called with null/undefined data!');
+                alert('Error: No quotation data to fill.');
+                return;
+            }
+
+            // Document Details
+            if (quotationData.quotation_ref || quotationData['Quotation Reference']) {
+                document.getElementById('quotation_ref').value = quotationData.quotation_ref || quotationData['Quotation Reference'];
+            }
+
+            // Date conversion (DD/MM/YYYY to YYYY-MM-DD for HTML date input)
+            const quotationDate = quotationData.quotation_date || quotationData['Quotation Date'];
+            if (quotationDate && quotationDate !== 'N/A') {
+                const [day, month, year] = quotationDate.split('/');
+                if (day && month && year) {
+                    document.getElementById('quotation_date').value = `${year}-${month}-${day}`;
+                }
+            }
+
+            // Validity Period
+            if (quotationData.validity_period || quotationData['Validity Period']) {
+                const validityValue = quotationData.validity_period || quotationData['Validity Period'];
+                document.getElementById('validity_period').value = validityValue.toString().replace(' Days', '');
+            }
+
+            // Customer Information
+            if (quotationData.customer_company || quotationData['Customer Company']) {
+                document.getElementById('customer_company').value = quotationData.customer_company || quotationData['Customer Company'];
+            }
+
+            if (quotationData.customer_address || quotationData['Customer Address']) {
+                document.getElementById('customer_address').value = quotationData.customer_address || quotationData['Customer Address'];
+            }
+
+            if (quotationData.customer_gst || quotationData['Customer GST']) {
+                document.getElementById('customer_gst').value = quotationData.customer_gst || quotationData['Customer GST'];
+            }
+
+            if (quotationData.contact_person || quotationData['Contact Person']) {
+                document.getElementById('contact_person').value = quotationData.contact_person || quotationData['Contact Person'];
+            }
+
+            if (quotationData.contact_phone || quotationData['Contact Phone']) {
+                document.getElementById('contact_phone').value = quotationData.contact_phone || quotationData['Contact Phone'];
+            }
+
+            if (quotationData.contact_email || quotationData['Contact Email']) {
+                document.getElementById('contact_email').value = quotationData.contact_email || quotationData['Contact Email'];
+            }
+
+            // Terms & Conditions
+            if (quotationData.delivery_terms || quotationData['Delivery Terms']) {
+                document.getElementById('delivery_terms').value = quotationData.delivery_terms || quotationData['Delivery Terms'];
+            }
+
+            if (quotationData.payment_terms || quotationData['Payment Terms']) {
+                document.getElementById('payment_terms').value = quotationData.payment_terms || quotationData['Payment Terms'];
+            }
+
+            if (quotationData.additional_terms || quotationData['Additional Terms']) {
+                document.getElementById('additional_terms').value = quotationData.additional_terms || quotationData['Additional Terms'];
+            }
+
+            if (quotationData.special_notes || quotationData['Special Notes']) {
+                document.getElementById('special_notes').value = quotationData.special_notes || quotationData['Special Notes'];
+            }
+
+            // HSN and Tax
+            if (quotationData.hsn || quotationData['HSN']) {
+                document.getElementById('quotation_hsn').value = quotationData.hsn || quotationData['HSN'];
+            }
+
+            if (quotationData.tax_rate || quotationData['Tax Rate']) {
+                const taxRate = quotationData.tax_rate || quotationData['Tax Rate'];
+                document.getElementById('quotation_tax_rate').value = taxRate.toString().replace('%', '');
+            }
+
+            // Inter-state checkbox
+            if (quotationData.inter_state || quotationData['Inter State']) {
+                const isInterState = (quotationData.inter_state || quotationData['Inter State']) === 'Yes';
+                document.getElementById('quotation_inter_state').checked = isInterState;
+            }
+
+            console.log('✅ All quotation form fields filled (except items)');
+
+            // Parse and fill items
+            parseAndFillQuotationItems(quotationData);
+
+            // Update preview
+            setTimeout(() => {
+                if (typeof updateQuotationPreview === 'function') {
+                    updateQuotationPreview();
+                    console.log('✅ Quotation preview updated');
+                }
+            }, 100);
+        }
+
+        /**
+         * Parse quotation items from Items Details (preferred) or Items Summary and fill the form
+         */
+        function parseAndFillQuotationItems(quotationData) {
+            console.log('🔍 parseAndFillQuotationItems called');
+
+            // Try Items Details first (has qty/rate info)
+            const itemsDetails = quotationData.items_details || quotationData['Items Details'];
+            const itemsSummary = quotationData.items_summary || quotationData['Items Summary'];
+
+            let dataToParse = itemsDetails || itemsSummary;
+
+            if (!dataToParse || dataToParse.trim() === '' || dataToParse === 'N/A') {
+                console.warn('⚠️ No items data found in quotation data');
+                return;
+            }
+
+            console.log('📋 Items Data to parse:', dataToParse);
+            console.log('📋 Using field:', itemsDetails ? 'Items Details' : 'Items Summary');
+
+            // Clear existing storage
+            parsedQuotationItemsData = [];
+
+            // CRITICAL: Clear existing items in DOM (remove default item on page load)
+            const quotationContainer = document.getElementById('quotationItemsContainer');
+            if (quotationContainer) {
+                quotationContainer.innerHTML = '';
+                console.log('🧹 Cleared existing quotation items from DOM');
+            }
+
+            // Reset quotation item count
+            if (documentManager) {
+                documentManager.quotationItemCount = 0;
+                console.log('🔄 Reset quotation item count to 0');
+            }
+
+            // Split by newline and filter empty lines
+            const lines = dataToParse.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+            console.log(`📦 Found ${lines.length} line(s) to parse`);
+
+            let parsedCount = 0;
+
+            for (let line of lines) {
+                console.log(`  Parsing line: "${line}"`);
+
+                let match;
+
+                // Try Pattern 1: "[N] Description - Additional Info | Qty: X | Rate: ₹Y | Amount: ₹Z"
+                // Example: "[1] Helical Gear Set - Custom Manufacturing - Material: EN8 | Qty: 4 | Rate: ₹8500 | Amount: ₹34000.00"
+                match = line.match(/\[(\d+)\]\s*(.+?)\s*\|\s*Qty:\s*(\d+)\s*\|\s*Rate:\s*₹?([\d,.]+)/i);
+
+                if (match) {
+                    const [, itemNum, fullDescription, qty, rate] = match;
+                    // Split description by " - " to separate main description from additional info
+                    const descParts = fullDescription.split(' - ');
+                    const description = descParts[0].trim();
+                    const additionalInfo = descParts.slice(1).join(' - ').trim();
+
+                    console.log(`  ✓ Pattern 1 matched: Description="${description}", Info="${additionalInfo}", Qty=${qty}, Rate=${rate}`);
+                    addQuotationItemToForm(description, additionalInfo, qty, rate.replace(/,/g, ''));
+                    parsedCount++;
+                    continue;
+                }
+
+                // Try Pattern 2: "1. Description - Additional Info (Qty @ Rate)"
+                // Example: "1. Slow speed Gear, Intermediate pinion - Bore Recondition Charges (2 @ 1500)"
+                match = line.match(/^\d+\.\s*(.+?)\s*-\s*(.+?)\s*\((\d+)\s*@\s*([\d.]+)\)/);
+
+                if (!match) {
+                    // Try Pattern 3: "Description - Additional Info (Qty @ Rate)" (no number)
+                    match = line.match(/^(.+?)\s*-\s*(.+?)\s*\((\d+)\s*@\s*([\d.]+)\)/);
+                }
+
+                if (!match) {
+                    // Try Pattern 4: "Description (Qty @ Rate)" (no additional info)
+                    match = line.match(/^(?:\d+\.\s*)?(.+?)\s*\((\d+)\s*@\s*([\d.]+)\)/);
+                    if (match) {
+                        const [, description, qty, rate] = match;
+                        console.log(`  ✓ Pattern 4 matched: Description="${description}", Qty=${qty}, Rate=${rate}`);
+                        addQuotationItemToForm(description.trim(), '', qty, rate);
+                        parsedCount++;
+                        continue;
+                    }
+                }
+
+                if (match) {
+                    const [, description, additionalInfo, qty, rate] = match;
+                    console.log(`  ✓ Pattern 2/3 matched: Description="${description}", Info="${additionalInfo}", Qty=${qty}, Rate=${rate}`);
+                    addQuotationItemToForm(description.trim(), additionalInfo.trim(), qty, rate);
+                    parsedCount++;
+                } else {
+                    console.warn(`  ⚠️ Could not parse line (skipping): "${line}"`);
+                }
+            }
+
+            console.log(`✅ Successfully parsed ${parsedCount} quotation item(s)`);
+
+            if (parsedCount === 0 && lines.length > 0) {
+                console.log('⚠️ Parsing failed for all lines, will use fallback');
+            }
+
+            // Wait for DOM to stabilize before filling fields
+            setTimeout(() => {
+                fillQuotationItemFieldsFromParsedData();
+            }, 200);
+        }
+
+        /**
+         * Add a quotation item to the form (without filling - prevents race condition)
+         */
+        function addQuotationItemToForm(description, additionalInfo, qty, rate) {
+            if (!documentManager || typeof documentManager.addItem !== 'function') {
+                console.error('❌ documentManager not available');
+                return false;
+            }
+
+            console.log('✅ documentManager exists, adding quotation item...');
+            documentManager.addItem('quotation');
+
+            // Store the parsed data for later filling
+            parsedQuotationItemsData.push({
+                description,
+                additionalInfo,
+                qty,
+                rate
+            });
+
+            console.log(`✅ Quotation item added and data stored. Total items data: ${parsedQuotationItemsData.length}`);
+            return true;
+        }
+
+        /**
+         * Fill quotation item fields from parsed data (called AFTER all items are rendered)
+         */
+        function fillQuotationItemFieldsFromParsedData() {
+            console.log('🔍 fillQuotationItemFieldsFromParsedData called');
+            console.log(`📦 Parsed quotation items data (${parsedQuotationItemsData.length} items):`, parsedQuotationItemsData);
+
+            // CRITICAL FIX: The class is 'item-entry' NOT 'item-card'
+            const itemEntries = document.querySelectorAll('#quotationItemsContainer .item-entry');
+            console.log(`📦 Quotation item entries in DOM: ${itemEntries.length}`);
+
+            if (itemEntries.length === 0) {
+                console.error('❌ No quotation item entries found in DOM!');
+                // FALLBACK: Create one item with full details/summary
+                console.log('🔄 Using fallback: creating single item with full description');
+                const itemsData = currentViewedQuotationData?.items_details || currentViewedQuotationData?.['Items Details'] ||
+                                  currentViewedQuotationData?.items_summary || currentViewedQuotationData?.['Items Summary'];
+                if (itemsData && documentManager) {
+                    documentManager.addItem('quotation');
+                    setTimeout(() => {
+                        const items = document.querySelectorAll('#quotationItemsContainer .item-entry');
+                        if (items.length > 0) {
+                            const lastItem = items[items.length - 1];
+                            const detailsInput = lastItem.querySelector('textarea');
+                            if (detailsInput) {
+                                detailsInput.value = `⚠️ Auto-filled from database - please review:\n\n${itemsData}`;
+                                detailsInput.style.background = '#fff3cd';
+                                console.log('✅ Fallback: Full data pasted into description');
+                            }
+                        }
+                    }, 100);
+                }
+                return;
+            }
+
+            // Fill each item entry with corresponding data using ID-based selectors
+            parsedQuotationItemsData.forEach((itemData, index) => {
+                if (index >= itemEntries.length) {
+                    console.warn(`⚠️ More parsed data (${parsedQuotationItemsData.length}) than item entries (${itemEntries.length})`);
+                    return;
+                }
+
+                const entry = itemEntries[index];
+                console.log(`📝 Filling quotation item ${index + 1}/${parsedQuotationItemsData.length}`);
+
+                // Extract itemId from the entry's ID (e.g., "quotation-item-1" -> "1")
+                const itemId = entry.id.replace('quotation-item-', '');
+                console.log(`  Item ID: ${itemId}`);
+
+                // Use exact ID-based selectors (more reliable than placeholders)
+                const descriptionInput = document.getElementById(`q_item_description_${itemId}`);
+                const additionalInfoInput = document.getElementById(`q_item_info_${itemId}`);
+                const qtyInput = document.getElementById(`q_item_qty_${itemId}`);
+                const rateInput = document.getElementById(`q_item_rate_${itemId}`);
+
+                console.log('  Found inputs:', {
+                    description: !!descriptionInput,
+                    additionalInfo: !!additionalInfoInput,
+                    qty: !!qtyInput,
+                    rate: !!rateInput
+                });
+
+                // Fill the fields
+                if (descriptionInput) {
+                    descriptionInput.value = itemData.description;
+                    console.log(`    ✓ Description: "${itemData.description}"`);
+                }
+                if (additionalInfoInput) {
+                    additionalInfoInput.value = itemData.additionalInfo;
+                    console.log(`    ✓ Additional Info: "${itemData.additionalInfo}"`);
+                }
+                if (qtyInput) {
+                    qtyInput.value = itemData.qty;
+                    console.log(`    ✓ Qty: ${itemData.qty}`);
+                }
+                if (rateInput) {
+                    rateInput.value = itemData.rate;
+                    console.log(`    ✓ Rate: ${itemData.rate}`);
+                }
+
+                console.log(`  ✅ Quotation item ${index + 1} filled successfully`);
+            });
+
+            console.log('✅ All quotation item fields filled!');
+
+            // Trigger calculations and preview update
+            setTimeout(() => {
+                if (typeof updateQuotationPreview === 'function') {
+                    updateQuotationPreview();
+                    console.log('✅ Quotation preview updated');
+                }
+            }, 100);
+        }
+
+        /**
+         * ==================== END QUOTATION EDIT FUNCTIONS ====================
+         */
 
         function handleHTMLViewerKeyPress(e) {
             if (e.key === 'Escape') {
