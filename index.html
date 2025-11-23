@@ -3042,6 +3042,23 @@
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
+                                    <label for="po_number">PO Number</label>
+                                    <input type="text"
+                                           id="po_number"
+                                           name="po_number"
+                                           placeholder="e.g., PO-2024-001"
+                                           onchange="updatePreview()">
+                                </div>
+                                <div class="form-group">
+                                    <label for="po_date">PO Date</label>
+                                    <input type="date"
+                                           id="po_date"
+                                           name="po_date"
+                                           onchange="updatePreview()">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
                                     <label for="despatch_through">Despatch Through</label>
                                     <input type="text"
                                            id="despatch_through"
@@ -4613,6 +4630,9 @@
         const PURCHASE_ORDER_DATABASE_URL = 'https://sngsng.app.n8n.cloud/webhook/get-purchase-orders';
         const DC_DATABASE_URL = 'https://sngsng.app.n8n.cloud/webhook/dc-list'; // Production URL - Fixed!
 
+        // Universal Update Webhook (for Edit & Save functionality)
+        const UPDATE_DOCUMENT_HTML_URL = 'https://sngsng.app.n8n.cloud/webhook/update-document-html';
+
         // ==================== SECURITY & UTILITIES ====================
 
         /**
@@ -5606,6 +5626,8 @@
                 date: data.date,
                 dc_no: data.dc_no,
                 dc_date: data.dc_date,
+                po_number: data.po_number,
+                po_date: data.po_date,
                 despatch_through: data.despatch_through,
                 document_through: data.document_through,
                 items: items,
@@ -7503,6 +7525,394 @@
          */
         let currentViewedHTML = '';
 
+        /**
+         * Inject Edit Functionality into Invoice/Quotation HTML
+         */
+        function injectEditFunctionality(html) {
+            // Check if HTML already has edit functionality
+            if (html.includes('enableEditMode()')) {
+                return html; // Already has edit functionality
+            }
+
+            // CSS for Edit buttons and editable mode
+            const editCSS = `
+    <style>
+        /* Edit Button Styles */
+        .edit-action-buttons {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 10000;
+        }
+
+        .edit-action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .edit-btn-edit {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .edit-btn-edit:hover {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+
+        .edit-btn-save {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .edit-btn-save:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .edit-btn-cancel {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .edit-btn-cancel:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Editable Field Styles */
+        [contenteditable="true"] {
+            outline: 2px dashed #f59e0b;
+            outline-offset: 3px;
+            background: #fffbeb;
+            padding: 4px 6px;
+            border-radius: 4px;
+            cursor: text;
+            transition: all 0.2s ease;
+        }
+
+        [contenteditable="true"]:hover {
+            background: #fef3c7;
+            outline-color: #d97706;
+        }
+
+        [contenteditable="true"]:focus {
+            outline: 3px solid #f59e0b;
+            background: #fef3c7;
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1);
+        }
+
+        /* Notification Styles */
+        .edit-notification {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10001;
+            animation: slideInRight 0.3s ease;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .edit-notification.success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .edit-notification.error {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .edit-notification.info {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        @media print {
+            .edit-action-buttons, .edit-notification, [contenteditable] {
+                display: none !important;
+            }
+        }
+    <\/style>`;
+
+            // Edit functionality JavaScript
+            const editJS = `
+    <script>
+        // Injected webhook URL for saving
+        const UPDATE_DOCUMENT_HTML_URL = '${UPDATE_DOCUMENT_HTML_URL}';
+
+        let isEditMode = false;
+        let originalHTML = '';
+
+        // Get document number from the page
+        function getDocumentNumber() {
+            // Try multiple selectors for invoice/quotation number
+            const selectors = [
+                '.highlight-text',
+                'strong:contains("Invoice No")',
+                'strong:contains("Quotation Ref")'
+            ];
+
+            for (let selector of selectors) {
+                const element = document.querySelector(selector);
+                if (element && element.textContent.trim()) {
+                    return element.textContent.trim();
+                }
+            }
+
+            // Fallback: try to find in the entire document
+            const text = document.body.innerText;
+            const invoiceMatch = text.match(/Invoice No[:\\s]+([A-Z0-9-]+)/i);
+            if (invoiceMatch) return invoiceMatch[1];
+
+            const quotationMatch = text.match(/Quotation Ref[:\\s]+([A-Z0-9-]+)/i);
+            if (quotationMatch) return quotationMatch[1];
+
+            return null;
+        }
+
+        // Enable edit mode
+        function enableEditMode() {
+            if (isEditMode) return;
+
+            isEditMode = true;
+            originalHTML = document.body.innerHTML;
+
+            // Make text content editable
+            const editableSelectors = [
+                '.company-name',
+                '.company-tagline',
+                '.company-address',
+                '.company-contact',
+                '.header-table td',
+                '.items-table td:not(:has(table))',
+                '.amount-words',
+                'strong + span',
+                '.highlight-text',
+                // Tax and Total fields
+                'p:not(:has(button)):not(:has(div))',  // Paragraphs (for CGST/SGST text)
+                'h3:not(:has(button))',  // Headings (for TOTAL)
+                'h4:not(:has(button))',
+                '.tax-summary',  // Tax summary sections
+                '.total-amount',  // Total amount fields
+                '.grand-total',
+                'div:not(:has(div)):not(:has(table)):not(:has(button))',  // Leaf divs with text
+                'td strong',  // Bold text in table cells (like TOTAL label)
+                'td:has(strong)',  // Table cells containing bold text
+                '.summary-row td',  // Summary row cells
+                '.total-row td'  // Total row cells
+            ];
+
+            editableSelectors.forEach(selector => {
+                document.querySelectorAll(selector).forEach(el => {
+                    // Don't make buttons or button containers editable
+                    if (!el.closest('.edit-action-buttons') &&
+                        !el.closest('.print-button') &&
+                        !el.closest('button')) {
+                        el.setAttribute('contenteditable', 'true');
+                    }
+                });
+            });
+
+            // Toggle buttons
+            const editBtn = document.getElementById('editModeBtn');
+            const saveBtn = document.getElementById('saveModeBtn');
+            const cancelBtn = document.getElementById('cancelModeBtn');
+
+            if (editBtn) editBtn.style.display = 'none';
+            if (saveBtn) saveBtn.style.display = 'inline-block';
+            if (cancelBtn) cancelBtn.style.display = 'inline-block';
+
+            showEditNotification('✏️ Edit mode enabled. Click any text to edit.', 'info');
+        }
+
+        // Cancel edit mode
+        function cancelEditMode() {
+            if (!isEditMode) return;
+
+            document.body.innerHTML = originalHTML;
+            isEditMode = false;
+
+            showEditNotification('✖️ Changes cancelled', 'info');
+        }
+
+        // Save changes
+        async function saveEditChanges() {
+            if (!isEditMode) return;
+
+            try {
+                // Detect document type from page title
+                const pageTitle = document.title || '';
+                let documentType = '';
+                let documentField = '';
+
+                if (pageTitle.toLowerCase().includes('invoice')) {
+                    documentType = 'invoice';
+                    documentField = 'Invoice No';
+                } else if (pageTitle.toLowerCase().includes('quotation')) {
+                    documentType = 'quotation';
+                    documentField = 'Quotation Ref';
+                } else {
+                    // Try to detect from page content
+                    const bodyText = document.body.textContent.toLowerCase();
+                    if (bodyText.includes('invoice no')) {
+                        documentType = 'invoice';
+                        documentField = 'Invoice No';
+                    } else if (bodyText.includes('quotation ref')) {
+                        documentType = 'quotation';
+                        documentField = 'Quotation Ref';
+                    } else {
+                        throw new Error('Could not identify document type (Invoice or Quotation)');
+                    }
+                }
+
+                // Get document number
+                const docNumber = getDocumentNumber();
+                if (!docNumber) {
+                    throw new Error('Could not identify document number');
+                }
+
+                console.log('📝 Saving document:', {
+                    type: documentType,
+                    number: docNumber,
+                    field: documentField
+                });
+
+                // Get the complete updated HTML
+                const updatedHTML = document.documentElement.outerHTML;
+
+                showEditNotification('💾 Saving changes...', 'info');
+
+                // Send to universal webhook
+                const response = await fetch(UPDATE_DOCUMENT_HTML_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        documentType: documentType,
+                        documentNumber: docNumber,
+                        documentField: documentField,
+                        html: updatedHTML
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error('Server error: ' + response.status + ' - ' + errorText);
+                }
+
+                const result = await response.json();
+                console.log('📥 Save response:', result);
+
+                if (result.success) {
+                    // Exit edit mode
+                    isEditMode = false;
+
+                    // Remove contenteditable
+                    document.querySelectorAll('[contenteditable]').forEach(el => {
+                        el.removeAttribute('contenteditable');
+                    });
+
+                    // Toggle buttons
+                    const editBtn = document.getElementById('editModeBtn');
+                    const saveBtn = document.getElementById('saveModeBtn');
+                    const cancelBtn = document.getElementById('cancelModeBtn');
+
+                    if (editBtn) editBtn.style.display = 'inline-block';
+                    if (saveBtn) saveBtn.style.display = 'none';
+                    if (cancelBtn) cancelBtn.style.display = 'none';
+
+                    showEditNotification('✅ Changes saved to Google Sheets successfully!', 'success');
+                } else {
+                    throw new Error(result.error || result.message || 'Save failed');
+                }
+            } catch (error) {
+                console.error('❌ Save error:', error);
+                showEditNotification('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        // Show notification
+        function showEditNotification(message, type = 'info') {
+            // Remove existing notification
+            const existing = document.querySelector('.edit-notification');
+            if (existing) existing.remove();
+
+            const notification = document.createElement('div');
+            notification.className = \`edit-notification \${type}\`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    <\/script>`;
+
+            // Edit buttons HTML to inject
+            const editButtons = `
+    <div class="edit-action-buttons no-print">
+        <button id="editModeBtn" class="edit-action-btn edit-btn-edit" onclick="enableEditMode()">
+            ✏️ Edit
+        </button>
+        <button id="saveModeBtn" class="edit-action-btn edit-btn-save" onclick="saveEditChanges()" style="display:none;">
+            💾 Save Changes
+        </button>
+        <button id="cancelModeBtn" class="edit-action-btn edit-btn-cancel" onclick="cancelEditMode()" style="display:none;">
+            ✖️ Cancel
+        </button>
+    <\/div>`;
+
+            // Inject CSS into <head>
+            html = html.replace('</head>', editCSS + '\n</head>');
+
+            // Inject buttons after <body>
+            html = html.replace('<body>', '<body>\n' + editButtons);
+
+            // Inject JavaScript before </body>
+            html = html.replace('</body>', editJS + '\n</body>');
+
+            return html;
+        }
+
         function openHTMLViewer(html, title) {
             const modal = document.getElementById('htmlViewerModal');
             const titleEl = document.getElementById('htmlViewerTitle');
@@ -7525,8 +7935,11 @@
             iframe.style.display = 'none';
 
             // Inject RGP logo into HTML (replace placeholder with actual base64)
-            const htmlWithLogo = html.replace(/\{\{RGP_LOGO_PLACEHOLDER\}\}/g, RGP_LOGO_BASE64);
-            
+            let htmlWithLogo = html.replace(/\{\{RGP_LOGO_PLACEHOLDER\}\}/g, RGP_LOGO_BASE64);
+
+            // Inject Edit functionality into the HTML
+            htmlWithLogo = injectEditFunctionality(htmlWithLogo);
+
             // Store current HTML for download (with logo)
             currentViewedHTML = htmlWithLogo;
 
