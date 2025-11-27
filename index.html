@@ -7543,8 +7543,10 @@
         let currentViewedHTML = '';
         let currentViewedInvoiceData = null; // Store current invoice data for editing
         let currentViewedQuotationData = null; // Store current quotation data for editing
+        let currentViewedDCData = null; // Store current DC data for editing
         let parsedItemsData = []; // Store parsed invoice items data temporarily
         let parsedQuotationItemsData = []; // Store parsed quotation items data temporarily
+        let parsedDCItemsData = []; // Store parsed DC items data temporarily
 
         /**
          * Inject Edit Functionality into Invoice/Quotation HTML
@@ -7958,10 +7960,17 @@
             if (documentType === 'quotation') {
                 currentViewedQuotationData = documentData;
                 currentViewedInvoiceData = null;
+                currentViewedDCData = null;
                 console.log('✅ Stored quotation data in currentViewedQuotationData');
+            } else if (documentType === 'dc') {
+                currentViewedDCData = documentData;
+                currentViewedInvoiceData = null;
+                currentViewedQuotationData = null;
+                console.log('✅ Stored DC data in currentViewedDCData');
             } else {
                 currentViewedInvoiceData = documentData;
                 currentViewedQuotationData = null;
+                currentViewedDCData = null;
                 console.log('✅ Stored invoice data in currentViewedInvoiceData');
             }
 
@@ -7969,8 +7978,9 @@
             if (editBtn) {
                 const isInvoice = title && title.toLowerCase().includes('invoice');
                 const isQuotation = title && title.toLowerCase().includes('quotation');
+                const isDC = title && title.toLowerCase().includes('challan');
 
-                if (documentData && (isInvoice || isQuotation)) {
+                if (documentData && (isInvoice || isQuotation || isDC)) {
                     editBtn.style.display = 'inline-block';
                     console.log(`✅ Edit button shown for ${documentType || 'invoice'}`);
                 } else {
@@ -8017,19 +8027,43 @@
             currentViewedHTML = '';
             currentViewedInvoiceData = null; // Clear invoice data
             currentViewedQuotationData = null; // Clear quotation data
+            currentViewedDCData = null; // Clear DC data
 
             // Remove ESC key listener
             document.removeEventListener('keydown', handleHTMLViewerKeyPress);
         }
 
         /**
-         * Edit the currently viewed invoice or quotation
+         * Edit the currently viewed invoice, quotation, or DC
          * This navigates to the generation page with pre-filled data
          */
         function editViewedInvoice() {
             console.log('🔍 editViewedInvoice called');
             console.log('🔍 currentViewedInvoiceData:', currentViewedInvoiceData);
             console.log('🔍 currentViewedQuotationData:', currentViewedQuotationData);
+            console.log('🔍 currentViewedDCData:', currentViewedDCData);
+
+            // Check if it's a DC
+            if (currentViewedDCData) {
+                console.log('✅ DC data found, proceeding to edit DC');
+
+                // CRITICAL: Save DC data BEFORE closing viewer (which clears it)
+                const dcDataToEdit = currentViewedDCData;
+                console.log('💾 Saved DC data locally before closing viewer');
+
+                // Close the viewer
+                closeHTMLViewer();
+
+                // Navigate to DC generation page
+                navigateTo('dcPage');
+
+                // Wait for page to load, then fill the form with saved data
+                setTimeout(() => {
+                    console.log('🔍 About to call fillDCForm with saved data:', dcDataToEdit);
+                    fillDCForm(dcDataToEdit);
+                }, 300);
+                return;
+            }
 
             // Check if it's a quotation
             if (currentViewedQuotationData) {
@@ -8814,6 +8848,331 @@
 
         /**
          * ==================== END QUOTATION EDIT FUNCTIONS ====================
+         */
+
+        /**
+         * ==================== DC EDIT FUNCTIONS ====================
+         */
+
+        /**
+         * Fill the DC generation form with data from database
+         * @param {Object} dcData - The DC data from the database
+         */
+        function fillDCForm(dcData) {
+            console.log('📝 Filling DC form with data:', dcData);
+
+            if (!dcData) {
+                console.error('❌ fillDCForm called with null/undefined data!');
+                alert('Error: No DC data to fill.');
+                return;
+            }
+
+            // DC Information
+            if (dcData.dc_number || dcData['DC Number']) {
+                document.getElementById('dc_number').value = dcData.dc_number || dcData['DC Number'];
+            }
+
+            // Date conversion (DD/MM/YYYY to YYYY-MM-DD for HTML date input)
+            const dcDate = dcData.dc_date || dcData['DC Date'];
+            if (dcDate && dcDate !== 'N/A') {
+                // Try parsing ISO format first
+                let dateObj;
+                if (dcDate.includes('-')) {
+                    dateObj = new Date(dcDate);
+                } else if (dcDate.includes('/')) {
+                    const [day, month, year] = dcDate.split('/');
+                    dateObj = new Date(`${year}-${month}-${day}`);
+                }
+                if (dateObj && !isNaN(dateObj)) {
+                    const yyyy = dateObj.getFullYear();
+                    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    const dd = String(dateObj.getDate()).padStart(2, '0');
+                    document.getElementById('dc_date_main').value = `${yyyy}-${mm}-${dd}`;
+                }
+            }
+
+            // PO Information
+            if (dcData.po_reference || dcData['PO Reference']) {
+                document.getElementById('po_reference').value = dcData.po_reference || dcData['PO Reference'];
+            }
+
+            const poDate = dcData.po_date || dcData['PO Date'];
+            if (poDate && poDate !== 'N/A') {
+                let dateObj;
+                if (poDate.includes('-')) {
+                    dateObj = new Date(poDate);
+                } else if (poDate.includes('/')) {
+                    const [day, month, year] = poDate.split('/');
+                    dateObj = new Date(`${year}-${month}-${day}`);
+                }
+                if (dateObj && !isNaN(dateObj)) {
+                    const yyyy = dateObj.getFullYear();
+                    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    const dd = String(dateObj.getDate()).padStart(2, '0');
+                    document.getElementById('po_date').value = `${yyyy}-${mm}-${dd}`;
+                }
+            }
+
+            if (dcData.po_value || dcData['PO Value']) {
+                document.getElementById('po_value').value = dcData.po_value || dcData['PO Value'];
+            }
+
+            // Customer Information
+            if (dcData.customer_name || dcData['Customer Name']) {
+                document.getElementById('customer_name').value = dcData.customer_name || dcData['Customer Name'];
+            }
+
+            // Parse customer address (may be single string or split lines)
+            const customerAddress = dcData.customer_address || dcData['Customer Address'];
+            if (customerAddress) {
+                const addressLines = customerAddress.split('\n');
+                if (addressLines[0]) document.getElementById('customer_address_line1').value = addressLines[0].trim();
+                if (addressLines[1]) document.getElementById('customer_address_line2').value = addressLines[1].trim();
+                if (addressLines[2]) document.getElementById('customer_address_line3').value = addressLines[2].trim();
+            }
+
+            if (dcData.customer_pincode || dcData['Customer Pincode']) {
+                document.getElementById('customer_pincode').value = dcData.customer_pincode || dcData['Customer Pincode'];
+            }
+
+            if (dcData.customer_gst || dcData['Customer GST']) {
+                document.getElementById('customer_gst').value = dcData.customer_gst || dcData['Customer GST'];
+            }
+
+            // Transport & Additional Details
+            if (dcData.waybill_number || dcData['Waybill Number']) {
+                document.getElementById('waybill_number').value = dcData.waybill_number || dcData['Waybill Number'];
+            }
+
+            const waybillDate = dcData.waybill_date || dcData['Waybill Date'];
+            if (waybillDate && waybillDate !== 'N/A') {
+                let dateObj;
+                if (waybillDate.includes('-')) {
+                    dateObj = new Date(waybillDate);
+                } else if (waybillDate.includes('/')) {
+                    const [day, month, year] = waybillDate.split('/');
+                    dateObj = new Date(`${year}-${month}-${day}`);
+                }
+                if (dateObj && !isNaN(dateObj)) {
+                    const yyyy = dateObj.getFullYear();
+                    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                    const dd = String(dateObj.getDate()).padStart(2, '0');
+                    document.getElementById('waybill_date').value = `${yyyy}-${mm}-${dd}`;
+                }
+            }
+
+            if (dcData.packing_details || dcData['Packing Details']) {
+                document.getElementById('packing_details').value = dcData.packing_details || dcData['Packing Details'];
+            }
+
+            if (dcData.transportation_mode || dcData['Transportation Mode']) {
+                document.getElementById('transportation_mode').value = dcData.transportation_mode || dcData['Transportation Mode'];
+            }
+
+            if (dcData.standard_text || dcData['Standard Text']) {
+                document.getElementById('standard_text').value = dcData.standard_text || dcData['Standard Text'];
+            }
+
+            console.log('✅ All DC form fields filled (except items)');
+
+            // Parse and fill items
+            parseAndFillDCItems(dcData);
+
+            // Update preview
+            setTimeout(() => {
+                if (typeof updateDCPreview === 'function') {
+                    updateDCPreview();
+                    console.log('✅ DC preview updated');
+                }
+            }, 100);
+        }
+
+        /**
+         * Parse DC items from items array or items summary and fill the form
+         */
+        function parseAndFillDCItems(dcData) {
+            console.log('🔍 parseAndFillDCItems called');
+
+            // Try items array first (preferred)
+            const itemsArray = dcData.items || dcData['Items'];
+
+            if (!itemsArray || !Array.isArray(itemsArray) || itemsArray.length === 0) {
+                console.warn('⚠️ No items array found in DC data');
+                return;
+            }
+
+            console.log(`📋 Found ${itemsArray.length} item(s) in DC data`);
+
+            // Clear existing storage
+            parsedDCItemsData = [];
+
+            // CRITICAL: Clear existing items in DOM (remove default item on page load)
+            const dcContainer = document.getElementById('dcItemsContainer');
+            if (dcContainer) {
+                dcContainer.innerHTML = '';
+                console.log('🧹 Cleared existing DC items from DOM');
+            }
+
+            // Reset DC item counter
+            if (typeof dcItemCounter !== 'undefined') {
+                dcItemCounter = 0;
+                console.log('🔄 Reset DC item count to 0');
+            }
+
+            // CRITICAL: Clear dcItems array (prevents duplicate items in preview)
+            if (typeof dcItems !== 'undefined') {
+                dcItems = [];
+                console.log('🔄 Reset dcItems array to []');
+            }
+
+            // Add items to form
+            let parsedCount = 0;
+            itemsArray.forEach((item, index) => {
+                console.log(`  Processing item ${index + 1}:`, item);
+
+                const sno = item.sno || item['S.NO'] || (index + 1).toString();
+                const hsn = item.hsn || item['HSN'] || '';
+                const name = item.name || item['Product Name'] || item.product_name || '';
+                const specs = item.specs || item['Specifications'] || item.specifications || '';
+                const grade = item.grade || item['Grade'] || '';
+                const qty = item.qty || item['Quantity'] || item.quantity || '';
+                const unit = item.unit || item['Unit'] || '';
+
+                if (addDCItemToForm(sno, hsn, name, specs, grade, qty, unit)) {
+                    parsedCount++;
+                }
+            });
+
+            console.log(`✅ Successfully processed ${parsedCount} DC item(s)`);
+
+            // Wait for DOM to stabilize before filling fields
+            setTimeout(() => {
+                fillDCItemFieldsFromParsedData();
+            }, 200);
+        }
+
+        /**
+         * Add a DC item to the form (without filling - prevents race condition)
+         */
+        function addDCItemToForm(sno, hsn, name, specs, grade, qty, unit) {
+            if (typeof addDCItem !== 'function') {
+                console.error('❌ addDCItem function not available');
+                return false;
+            }
+
+            console.log('✅ addDCItem exists, adding DC item...');
+            addDCItem();
+
+            // Store the parsed data for later filling
+            parsedDCItemsData.push({
+                sno,
+                hsn,
+                name,
+                specs,
+                grade,
+                qty,
+                unit
+            });
+
+            console.log(`✅ DC item added and data stored. Total items data: ${parsedDCItemsData.length}`);
+            return true;
+        }
+
+        /**
+         * Fill DC item fields from parsed data (called AFTER all items are rendered)
+         */
+        function fillDCItemFieldsFromParsedData() {
+            console.log('🔍 fillDCItemFieldsFromParsedData called');
+            console.log(`📦 Parsed DC items data (${parsedDCItemsData.length} items):`, parsedDCItemsData);
+
+            // CRITICAL FIX: The class is 'item-card' for DC items
+            const itemCards = document.querySelectorAll('#dcItemsContainer .item-card');
+            console.log(`📦 DC item cards in DOM: ${itemCards.length}`);
+
+            if (itemCards.length === 0) {
+                console.error('❌ No DC item cards found in DOM!');
+                return;
+            }
+
+            // Fill each item card with corresponding data using ID-based selectors
+            parsedDCItemsData.forEach((itemData, index) => {
+                if (index >= itemCards.length) {
+                    console.warn(`⚠️ More parsed data (${parsedDCItemsData.length}) than item cards (${itemCards.length})`);
+                    return;
+                }
+
+                const card = itemCards[index];
+                console.log(`📝 Filling DC item ${index + 1}/${parsedDCItemsData.length}`);
+
+                // Extract itemId from the card's ID (e.g., "dc-item-1" -> "1")
+                const itemId = card.id.replace('dc-item-', '');
+                console.log(`  Item ID: ${itemId}`);
+
+                // Use exact ID-based selectors (more reliable)
+                const snoInput = document.getElementById(`dc_item_sno_${itemId}`);
+                const hsnInput = document.getElementById(`dc_item_hsn_${itemId}`);
+                const nameInput = document.getElementById(`dc_item_name_${itemId}`);
+                const specsInput = document.getElementById(`dc_item_specs_${itemId}`);
+                const gradeInput = document.getElementById(`dc_item_grade_${itemId}`);
+                const qtyInput = document.getElementById(`dc_item_qty_${itemId}`);
+                const unitInput = document.getElementById(`dc_item_unit_${itemId}`);
+
+                console.log('  Found inputs:', {
+                    sno: !!snoInput,
+                    hsn: !!hsnInput,
+                    name: !!nameInput,
+                    specs: !!specsInput,
+                    grade: !!gradeInput,
+                    qty: !!qtyInput,
+                    unit: !!unitInput
+                });
+
+                // Fill the fields
+                if (snoInput) {
+                    snoInput.value = itemData.sno;
+                    console.log(`    ✓ S.NO: "${itemData.sno}"`);
+                }
+                if (hsnInput) {
+                    hsnInput.value = itemData.hsn;
+                    console.log(`    ✓ HSN: "${itemData.hsn}"`);
+                }
+                if (nameInput) {
+                    nameInput.value = itemData.name;
+                    console.log(`    ✓ Name: "${itemData.name}"`);
+                }
+                if (specsInput) {
+                    specsInput.value = itemData.specs;
+                    console.log(`    ✓ Specs: "${itemData.specs}"`);
+                }
+                if (gradeInput) {
+                    gradeInput.value = itemData.grade;
+                    console.log(`    ✓ Grade: "${itemData.grade}"`);
+                }
+                if (qtyInput) {
+                    qtyInput.value = itemData.qty;
+                    console.log(`    ✓ Qty: ${itemData.qty}`);
+                }
+                if (unitInput) {
+                    unitInput.value = itemData.unit;
+                    console.log(`    ✓ Unit: "${itemData.unit}"`);
+                }
+
+                console.log(`  ✅ DC item ${index + 1} filled successfully`);
+            });
+
+            console.log('✅ All DC item fields filled!');
+
+            // Trigger preview update
+            setTimeout(() => {
+                if (typeof updateDCPreview === 'function') {
+                    updateDCPreview();
+                    console.log('✅ DC preview updated');
+                }
+            }, 100);
+        }
+
+        /**
+         * ==================== END DC EDIT FUNCTIONS ====================
          */
 
         function handleHTMLViewerKeyPress(e) {
@@ -12104,7 +12463,7 @@
         function viewDCRecord(record) {
             // Use the standard HTML viewer (same as invoices) for consistent printing
             if (record.generated_html && record.generated_html.trim()) {
-                openHTMLViewer(record.generated_html, `Delivery Challan: ${record.dc_no || record.dc_number || ''}`);
+                openHTMLViewer(record.generated_html, `Delivery Challan: ${record.dc_no || record.dc_number || ''}`, record, 'dc');
             } else {
                 alert('No saved document found for this delivery challan.');
             }
